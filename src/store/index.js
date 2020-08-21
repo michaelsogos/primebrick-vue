@@ -180,6 +180,7 @@ const store = new Vuex.Store({
 			let result = await RestApiService.post($api.POST_USER_LOGIN, credentials);
 
 			if (!result.hasError) {
+				debugger;
 				/** @type {AuthTokensPayload} */
 				const authTokens = result.response;
 				sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
@@ -193,7 +194,7 @@ const store = new Vuex.Store({
 				context.commit($.mutations.APP_SET_PAGE, "page-main");
 			} else {
 				console.error(result.exception);
-				alert(result.clientMessage);
+				return false;
 			}
 		},
 		/**

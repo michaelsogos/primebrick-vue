@@ -56,6 +56,16 @@
                                 class="mt-8"
                                 tabindex="3"
                             >{{ "login" | translate }}</v-btn>
+                            <v-alert
+                                type="error"
+                                border="left"
+                                colored-border="error"
+                                class="mt-4 white"
+                                dense
+                                elevation="0"
+                                light
+                                :value="showErrorMessage"
+                            >{{'login-failed'|translate}}</v-alert>
                         </v-form>
                     </v-card-text>
                 </v-card>
@@ -74,10 +84,13 @@ export default {
         username: '',
         password: '',
         showAlertCapsLock: false,
+        showErrorMessage: false,
     }),
     methods: {
         onLogin() {
-            this.$store.dispatch($.actions.APP_LOGIN_USER, { username: this.username, password: this.password });
+            this.$store.dispatch($.actions.APP_LOGIN_USER, { username: this.username, password: this.password }).then(result => {
+                if (!result) this.showErrorMessage = true;
+            });
         },
         checkIfCapsLockIsOn(event) {
             if (event.getModifierState("CapsLock")) {

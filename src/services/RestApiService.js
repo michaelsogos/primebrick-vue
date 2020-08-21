@@ -22,10 +22,18 @@ export class RestApiService {
 		let headers = prepareHttpHeader();
 
 		try {
-			let result = await axios.get(`${config.restApiEndpoint}/${endpoint}`, {
-				params: data,
-				headers: headers,
-			});
+			let result = await axios
+				.get(`${config.restApiEndpoint}/${endpoint}`, {
+					params: data,
+					headers: headers,
+				})
+				.catch((err) => {
+					if (err.response.status >= 400) {
+						throw new Error(err.response.data.message);
+					}
+					throw err;
+				});
+
 			apiResult.response = result.data;
 		} catch (ex) {
 			if (ex.message == "Network Error") {
@@ -56,25 +64,28 @@ export class RestApiService {
 		let headers = prepareHttpHeader();
 
 		try {
-			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers });
+			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers }).catch((err) => {
+				if (err.response.status >= 400) {
+					throw new Error(err.response.data.message);
+				}
+				throw err;
+			});
+
 			apiResult.response = result.data;
 		} catch (ex) {
 			if (ex.message == "Network Error") {
 				ex.clientMessage = "Backend server not reachable!";
 				apiResult.clientMessage = ex.clientMessage;
 			} else if (ex.response && ex.response.status == 401 && headers.Authorization) {
-				debugger;
 				let refreshTokenResult = await refreshAccessToken();
 				if (refreshTokenResult) return await this.post(endpoint, data, throwsError);
 			}
-			debugger;
 
 			if (throwsError) throw ex;
 			apiResult.hasError = true;
 			apiResult.clientMessage = ex.message;
 			apiResult.exception = ex;
 		}
-		debugger;
 
 		return apiResult;
 	}
