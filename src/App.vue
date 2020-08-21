@@ -84,8 +84,9 @@ export default {
         }
     },
     mounted() {
-        this.$store.dispatch($.actions.APP_EXEC_INIT);
-        this.$store.commit($.mutations.APP_SET_PAGE, "page-login");
+        this.$store.dispatch($.actions.APP_EXEC_INIT).then(() => {
+            this.$store.commit($.mutations.APP_SET_PAGE, "page-login");
+        });
     },
 }
 </script>

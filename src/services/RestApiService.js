@@ -28,21 +28,18 @@ export class RestApiService {
 			});
 			apiResult.response = result.data;
 		} catch (ex) {
-			if (ex.response.status == 401 && headers.Authorization) {
+			if (ex.message == "Network Error") {
+				ex.clientMessage = "Backend server not reachable!";
+				apiResult.clientMessage = ex.clientMessage;
+			} else if (ex.response && ex.response.status == 401 && headers.Authorization) {
 				let refreshTokenResult = await refreshAccessToken();
-				if (refreshTokenResult) this.post(endpoint, data, throwsError);
-				else {
-					if (throwsError) throw ex;
-					apiResult.hasError = true;
-					apiResult.clientMessage = ex.message;
-					apiResult.exception = ex;
-				}
-			} else {
-				if (throwsError) throw ex;
-				apiResult.hasError = true;
-				apiResult.clientMessage = ex.message;
-				apiResult.exception = ex;
+				if (refreshTokenResult) return await this.get(endpoint, data, throwsError);
 			}
+
+			if (throwsError) throw ex;
+			apiResult.hasError = true;
+			apiResult.clientMessage = ex.message;
+			apiResult.exception = ex;
 		}
 
 		return apiResult;
@@ -62,22 +59,22 @@ export class RestApiService {
 			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers });
 			apiResult.response = result.data;
 		} catch (ex) {
-			if (ex.response.status == 401 && headers.Authorization) {
+			if (ex.message == "Network Error") {
+				ex.clientMessage = "Backend server not reachable!";
+				apiResult.clientMessage = ex.clientMessage;
+			} else if (ex.response && ex.response.status == 401 && headers.Authorization) {
+				debugger;
 				let refreshTokenResult = await refreshAccessToken();
-				if (refreshTokenResult) this.post(endpoint, data, throwsError);
-				else {
-					if (throwsError) throw ex;
-					apiResult.hasError = true;
-					apiResult.clientMessage = ex.message;
-					apiResult.exception = ex;
-				}
-			} else {
-				if (throwsError) throw ex;
-				apiResult.hasError = true;
-				apiResult.clientMessage = ex.message;
-				apiResult.exception = ex;
+				if (refreshTokenResult) return await this.post(endpoint, data, throwsError);
 			}
+			debugger;
+
+			if (throwsError) throw ex;
+			apiResult.hasError = true;
+			apiResult.clientMessage = ex.message;
+			apiResult.exception = ex;
 		}
+		debugger;
 
 		return apiResult;
 	}

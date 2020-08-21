@@ -1,7 +1,7 @@
 <template>
     <v-container fluid fill-height class="pa-0 ma-0">
         <v-row justify="center" align="center" class="secondary">
-            <v-col cols="3">
+            <v-col md="3" sm="6">
                 <v-card color="secondary" dark elevation="0">
                     <v-card-title class="text-center">
                         <div class="text-center pt-5" style="width:100%;">{{'login'|translate}}</div>

@@ -152,7 +152,7 @@ const store = new Vuex.Store({
 				context.commit($.mutations.APP_SET_TRANSLATIONS, metaTranslations.response);
 			} catch (/** @type {Error}*/ ex) {
 				console.error(ex);
-				alert(ex.message);
+				alert(ex.clientMessage || ex.message);
 			}
 		},
 		/**
@@ -293,7 +293,7 @@ const store = new Vuex.Store({
 			}
 		},
 		[$.getters.APP_GET_TRANSLATION]: (state) => (key) => {
-			let translation = state.translations.find((item) => {
+			let translation = state.app.translations.find((item) => {
 				return item.key === key;
 			});
 
@@ -303,10 +303,10 @@ const store = new Vuex.Store({
 		[$.getters.APP_TRANSLATE_STRING]: (state) => (key, params) => {
 			if (StringUtils.isNullOrWhitespace(key)) return "{{WRONG_KEY}}";
 			else {
+				/** @type {Translation} */
 				let translation = store.getters[$.getters.APP_GET_TRANSLATION](key);
-				let is_template = translation.is_template;
 				var str = translation.value;
-				if (is_template == false) {
+				if (translation.isTemplate == false) {
 					return str;
 				} else {
 					if (!Array.isArray(params)) {
