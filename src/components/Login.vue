@@ -4,7 +4,10 @@
             <v-col md="3" sm="6">
                 <v-card color="secondary" dark elevation="0">
                     <v-card-title class="text-center">
-                        <div class="text-center pt-5" style="width:100%;">{{'login'|translate}}</div>
+                        <div
+                            class="text-center pt-5 text-h4"
+                            style="width:100%;"
+                        >{{'login'|translate}}</div>
                     </v-card-title>
 
                     <v-card-subtitle class="text-center">{{'login-hint'|translate}}</v-card-subtitle>
@@ -59,7 +62,7 @@
                             <v-alert
                                 type="error"
                                 border="left"
-                                colored-border="error"
+                                :colored-border="true"
                                 class="mt-4 white"
                                 dense
                                 elevation="0"
