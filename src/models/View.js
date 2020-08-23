@@ -10,6 +10,8 @@ export class View {
 		this.color = null;
 		/** @type {ViewDefinition} */
 		this.definition = null;
+		/** @type {ViewNameType[]} */
+		this.alternativeViews = [];
 	}
 }
 
@@ -84,5 +86,14 @@ export class ViewDefinition {
 		this.fields = [];
 		/** @type {String[]} */
 		this.perms = [];
+	}
+}
+
+export class ViewNameType {
+	constructor() {
+		/** @type {String} */
+		this.name = null;
+		/** @type {String} */
+		this.type = null;
 	}
 }

@@ -1,11 +1,10 @@
 <template>
-    <v-container fluid fill-height class="pa-0 ma-0 align-content-start">
+    <v-container fluid fill-height class="pa-2 ma-0 align-content-start">
         <h-panel>
             <template v-slot:header>
                 <v-tabs
                     v-model="$store.state.app.viewTabIndex"
-                    background-color="grey lighten-3"
-                    :style="`border-bottom: 2px solid ${sliderColor||'primary'}`"
+                    background-color="transparent"
                     :hide-slider="true"
                 >
                     <v-tab
@@ -24,7 +23,7 @@
                             class="ma-0 ml-3 primary--text"
                             @click.stop="onCloseTab(index)"
                         >
-                            <v-icon color="error" small>mdi-close-box</v-icon>
+                            <v-icon color="error" small>mdi-close-circle</v-icon>
                         </v-btn>
                     </v-tab>
                 </v-tabs>
@@ -49,7 +48,7 @@ import { View } from '../models/View';
 export default {
     name: 'page-main',
     data: () => ({
-        sliderColor: 'primary'
+        sliderColor: null
     }),
     computed: {
         /** @returns {View[]} */
@@ -63,21 +62,29 @@ export default {
     },
     watch: {
         viewTabIndex(newValue) {
-            this.sliderColor = this.viewTabs[newValue].color;
+            this.sliderColor = this.computeColor(this.viewTabs[newValue].color);
         }
     },
     methods: {
         onClickTab(/** @type {ViewContext} */ viewTab) {
-            this.sliderColor = viewTab.color;
+            this.sliderColor = this.computeColor(viewTab.color);
         },
         onCloseTab(/** @type {Number} */ tabIndex) {
             this.$store.commit($.mutations.APP_REMOVE_VIEWTAB, tabIndex);
         },
         tabStyle(/** @type {ViewContext} */ viewTab) {
-            return `color: ${viewTab.color}; border-right: 1px solid #d0d0d0;`;
+            return `color: ${this.computeColor(viewTab.color)}; border-right: 1px solid #d0d0d0;`;
         },
         loadView(/** @type {Number} */ tabIndex) {
-            return `view-${this.viewTabs[tabIndex].viewType}`;
+            return `view-${this.viewTabs[tabIndex].definition.type}`;
+        },
+        computeColor(/** @type {String} */ color) {
+            if (!color)
+                return 'var(--v-tertiary-base)';
+            else if (color == 'primary' || color == 'secondary' || color == 'tertiary')
+                return `var(--v-${color}-base)`;
+            else
+                return color;
         }
     },
     mounted() {

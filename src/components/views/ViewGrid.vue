@@ -6,32 +6,39 @@
                     dense
                     flat
                     tile
-                    color="grey lighten-2"
+                    :color="`${computeColor(view.color)} lighten-5`"
                     height="36"
-                    style="border-bottom: 12px solid #ff0000"
+                    :style="`border-bottom: 2px solid ${computeCssColor(view.color)} !important`"
                 >
                     <v-btn text tile class="caption primary--text">
-                        <v-icon small left>fa-plus</v-icon>add
+                        <v-icon small left>mdi-plus</v-icon>add
                     </v-btn>
                     <v-btn text tile class="caption error--text">
-                        <v-icon small left>fa-trash</v-icon>delete
+                        <v-icon small left>mdi-trash-can</v-icon>delete
                     </v-btn>
                     <v-btn text tile class="caption primary--text" @click="onRefresh">
-                        <v-icon small left>fa-refresh</v-icon>aggiorna
+                        <v-icon small left>mdi-refresh</v-icon>aggiorna
                     </v-btn>
                     <v-spacer></v-spacer>
-                    <!-- <v-btn-toggle
-                        v-if="viewContext.views.length > 1"
-                        :value="viewButtonSelected"
-                        dark
-                        mandatory
-                    >
-                        <template v-for="(item) in viewContext.views">
-                            <v-btn :key="item.type" small color="secondary">
-                                <v-icon small>{{getViewIcon(item)}}</v-icon>
+                    <v-btn-toggle v-if="view.alternativeViews.length > 0" :value="0" dark>
+                        <v-btn
+                            small
+                            :color="computeColor(view.color)"
+                            :title="view.definition.type"
+                        >
+                            <v-icon small>{{getViewIcon(view.definition.type)}}</v-icon>
+                        </v-btn>
+                        <template v-for="(item) in view.alternativeViews">
+                            <v-btn
+                                :key="item.type"
+                                small
+                                :color="computeColor(view.color)"
+                                :title="item.type"
+                            >
+                                <v-icon small>{{getViewIcon(item.type)}}</v-icon>
                             </v-btn>
                         </template>
-                    </v-btn-toggle>-->
+                    </v-btn-toggle>
                 </v-toolbar>
             </template>
             <template v-slot:footer>
@@ -83,13 +90,12 @@
 <script>
 import $ from "../../store/types";
 // eslint-disable-next-line no-unused-vars
-import { ViewType } from '../../models/ViewContext';
-// eslint-disable-next-line no-unused-vars
 import { ViewGridDefinition } from "../../models/ViewGridDefinition";
 // eslint-disable-next-line no-unused-vars
 import { SearchResult } from "../../models/SearchResult";
-import { LowLevelHelpers } from "../../utils/LowLevelHelpers";
-import { View } from 'src/models/View';
+import { LowLevelUtils } from "../../common/LowLevelUtils";
+// eslint-disable-next-line no-unused-vars
+import { View, ViewNameType } from 'src/models/View';
 
 export default {
     name: "view-grid",
@@ -98,7 +104,6 @@ export default {
     },
     data: function () {
         return {
-            viewButtonSelected: null,
             /** @type {ViewGridDefinition} */
             viewDefinition: null,
             /** @type {ViewType} */
@@ -148,11 +153,11 @@ export default {
             let expressionEvaluators = [];
             for (let hilite of this.viewDefinition.view.hilites) {
                 let evaluator = {
-                    eval: LowLevelHelpers.makeExpessionEvaluator(this.viewData.data[0], hilite.condition),
+                    eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], hilite.condition),
                     cssClasses: []
                 };
 
-                if (hilite.background) evaluator.cssClasses.push(...[LowLevelHelpers.cssClassNameSanitizer(hilite.background), "lighten-4"]);
+                if (hilite.background) evaluator.cssClasses.push(...[LowLevelUtils.cssClassNameSanitizer(hilite.background), "lighten-4"]);
                 if (hilite.color) evaluator.cssClasses.push(`${hilite.color}--text`);
 
                 expressionEvaluators.push(evaluator);
@@ -187,7 +192,7 @@ export default {
             }
 
             return records;
-        }
+        },
     },
     methods: {
         onPageChange(/** @type {Number} */ pageNumber) {
@@ -218,18 +223,18 @@ export default {
         onDoubleClickRow(event, row) {
             this.onEditItem(row.item);
         },
-        getViewIcon(/** @type {ViewType} */ viewType) {
-            switch (viewType.type) {
+        getViewIcon(/** @type {string} */ viewType) {
+            switch (viewType) {
                 case "cards":
-                    return 'fa-th';
+                    return 'mdi-card-text';
                 case "grid":
-                    return "fa-list";
+                    return "mdi-table-large";
                 case "form":
-                    return "fa-file-text-o";
+                    return "mdi-form-textbox";
                 case "calendar":
-                    return "fa-calendar";
+                    return "mdi-calendar-month";
                 default:
-                    return "fa-external-link";
+                    return "mdi-view-compact";
             }
         },
         // eslint-disable-next-line no-unused-vars
@@ -257,11 +262,25 @@ export default {
 
             this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](this.viewContext.context, this.viewContext.domain, this.viewContext.model, dataFields, 50, (this.viewDataPageNumber - 1) * 50, sortFields);
             this.viewDataLoading = false;
+        },
+        computeCssColor(/** @type {String} */ color) {
+            if (!color)
+                return 'var(--v-tertiary-base)';
+            else if (color == 'primary' || color == 'secondary' || color == 'tertiary')
+                return `var(--v-${color}-base)`;
+            else
+                return color;
+        },
+        computeColor(/** @type {String} */ color) {
+            if (!color)
+                return 'tertiary';
+            else
+                return color;
         }
     },
     mounted() {
+        console.log(this.view.alternativeViews);
         let self = this;
-        this.viewButtonSelected = this.viewContext.views.findIndex((item) => item.type == this.viewContext.viewType);
         this.viewType = this.viewContext.views[this.viewButtonSelected];
         this.loadViewDefinition().then(() => {
             self.loadData().catch(ex => {

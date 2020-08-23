@@ -18,11 +18,11 @@ Vue.component(UIPanel.name, UIPanel);
 
 //* Register Views *//
 //--------------------------//
-// import ViewCards from "../components/views/ViewCards.vue";
-// Vue.component(ViewCards.name, ViewCards);
+import ViewCards from "../components/views/ViewCards.vue";
+Vue.component(ViewCards.name, ViewCards);
 
-// import ViewGrid from "../components/views/ViewGrid.vue";
-// Vue.component(ViewGrid.name, ViewGrid);
+import ViewGrid from "../components/views/ViewGrid.vue";
+Vue.component(ViewGrid.name, ViewGrid);
 
-// import ViewForm from "../components/views/ViewForm.vue";
-// Vue.component(ViewForm.name, ViewForm);
+import ViewForm from "../components/views/ViewForm.vue";
+Vue.component(ViewForm.name, ViewForm);

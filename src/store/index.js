@@ -82,13 +82,11 @@ const store = new Vuex.Store({
 		 * @param {AuthTokensPayload} authTokens
 		 */
 		[$.mutations.APP_SET_AUTHTOKEN](state, authTokens) {
-			console.log(authTokens);
 			if (authTokens) {
 				sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
 				let decodedProfile = window.atob(authTokens.access_token.split(".")[1]);
 				/** @type {AuthUserProfile} */
 				let userProfile = JSON.parse(decodedProfile);
-				console.log(userProfile);
 				state.app.user = userProfile;
 			} else {
 				sessionStorage.removeItem("authTokens");
@@ -98,10 +96,10 @@ const store = new Vuex.Store({
 		/**
 		 *
 		 * @param {initialState} state
-		 * @param {ViewContext} viewContext
+		 * @param {View} view
 		 */
-		[$.mutations.APP_ADD_VIEWTAB](state, viewContext) {
-			let index = state.app.viewTabs.push(viewContext);
+		[$.mutations.APP_ADD_VIEWTAB](state, view) {
+			let index = state.app.viewTabs.push(view);
 			state.app.viewTabIndex = index - 1;
 		},
 		/**
@@ -191,7 +189,6 @@ const store = new Vuex.Store({
 			});
 
 			if (!result.hasError) {
-				console.log(result.response);
 				/** @type {View} */
 				let view = result.response;
 				if (!view.icon) view.icon = menuItem.icon;

@@ -5,7 +5,6 @@
 		"module": "commonJS",
 		"moduleResolution": "node",
 		"sourceMap": true,
-		"checkJs": true,
 		"baseUrl": "./"
 	},
 	"include": ["src/**/*"],
