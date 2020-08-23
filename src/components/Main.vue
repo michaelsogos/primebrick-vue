@@ -10,14 +10,14 @@
                 >
                     <v-tab
                         v-for="(item,index) in viewTabs"
-                        :key="item.actionId"
+                        :key="item.name"
                         class="py-0 pl-2 pr-1 caption text-capitalize"
                         :style="tabStyle(item)"
                         @click="onClickTab(item)"
                         active-class="tab-item-selected"
                     >
                         <v-icon small class="mr-2">{{item.icon}}</v-icon>
-                        <span class="primary--text">{{ item.title }}</span>
+                        <span class="primary--text">{{ item.labelKey | translate }}</span>
                         <v-btn
                             small
                             icon
@@ -33,12 +33,8 @@
                 <div></div>
             </template>
             <v-tabs-items v-model="$store.state.app.viewTabIndex" class="fill-height">
-                <v-tab-item
-                    v-for="(item,index) in viewTabs"
-                    :key="item.actionId"
-                    class="fill-height"
-                >
-                    <component :is="loadView(index)" :view-context="item" ref="activeView"></component>
+                <v-tab-item v-for="(item,index) in viewTabs" :key="item.name" class="fill-height">
+                    <component :is="loadView(index)" :view="item" ref="activeView"></component>
                 </v-tab-item>
             </v-tabs-items>
         </h-panel>
@@ -47,9 +43,8 @@
 
 <script>
 import $ from "../store/types";
-
 // eslint-disable-next-line no-unused-vars
-import { ViewContext } from "../models/ViewContext";
+import { View } from '../models/View';
 
 export default {
     name: 'page-main',
@@ -57,7 +52,7 @@ export default {
         sliderColor: 'primary'
     }),
     computed: {
-        /** @returns {ViewContext[]} */
+        /** @returns {View[]} */
         viewTabs() {
             return this.$store.state.app.viewTabs;
         },
@@ -91,7 +86,8 @@ export default {
             //To handle VIEW REFRESH
             if ((e.key === "r" && (e.ctrlKey || e.metaKey)) || (e.keyCode === 116 && !e.ctrlKey && !e.metaKey)) { //CTRL+R or F5
                 e.preventDefault();
-                self.$refs.activeView[0].onRefresh();
+                if (self.$refs.activeView)
+                    self.$refs.activeView[0].onRefresh();
             }
 
             //To handle VIEW SAVE

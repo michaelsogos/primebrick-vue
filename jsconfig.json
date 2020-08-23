@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
 		"experimentalDecorators": true,
-		"target": "es6",
+		"target": "es2017",
 		"module": "commonJS",
-		"baseUrl": ".",
-		"sourceMap": true
+		"moduleResolution": "node",
+		"sourceMap": true,
+		"checkJs": true,
+		"baseUrl": "./"
 	},
-	"include": ["./src/**/*"],
+	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist", "public"]
 }

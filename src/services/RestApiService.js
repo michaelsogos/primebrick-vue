@@ -2,6 +2,8 @@ import config from "../../public/config";
 import Axios from "axios";
 import { ApiResult } from "../models/ApiResult";
 import $api from "../enums/ApiEndPoints";
+import store from "../store/index";
+import $ from "../store/types";
 
 const axios = Axios.create({
 	// withCredentials: true,
@@ -16,6 +18,7 @@ export class RestApiService {
 	 * @param {String} endpoint The REST API to call
 	 * @param {Object} data Data to send to REST API
 	 * @param {Boolean} throwsError When TRUE any exception will be elevated
+	 * @returns {Promise<ApiResult>}
 	 */
 	static async get(endpoint, data, throwsError = false) {
 		let apiResult = new ApiResult();
@@ -29,7 +32,8 @@ export class RestApiService {
 				})
 				.catch((err) => {
 					if (err.response.status >= 400) {
-						throw new Error(err.response.data.message);
+						err.message = err.response.data.message;
+						throw err;
 					}
 					throw err;
 				});
@@ -58,15 +62,17 @@ export class RestApiService {
 	 * @param {String} endpoint The REST API to call
 	 * @param {Object} data Data to send to REST API
 	 * @param {Boolean} throwsError When TRUE any exception will be elevated
+	 * @returns {Promise<ApiResult>}
 	 */
-	static async post(endpoint, data, throwsError) {
+	static async post(endpoint, data, throwsError = false) {
 		let apiResult = new ApiResult();
 		let headers = prepareHttpHeader();
 
 		try {
 			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers }).catch((err) => {
 				if (err.response.status >= 400) {
-					throw new Error(err.response.data.message);
+					err.message = err.response.data.message;
+					throw err;
 				}
 				throw err;
 			});
@@ -104,20 +110,25 @@ function prepareHttpHeader() {
 }
 
 async function refreshAccessToken() {
+	debugger;
 	const tokens = JSON.parse(sessionStorage.getItem("authTokens"));
 	const headers = prepareHttpHeader();
 
 	try {
+		debugger;
 		let result = await axios.post(
 			`${config.restApiEndpoint}/${$api.POST_REFRESH_TOKEN}`,
 			{ refresh_token: tokens.refresh_token },
 			{ headers: headers }
 		);
 		const authTokens = result.data;
-		sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
+		debugger;
+		store.commit($.mutations.APP_SET_AUTHTOKEN, authTokens);
+		debugger;
 		console.info("Access token refreshed!");
 		return true;
 	} catch (ex) {
+		debugger;
 		console.error(ex);
 		return false;
 	}

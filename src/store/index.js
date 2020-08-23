@@ -9,14 +9,13 @@ import $api from "../enums/ApiEndPoints";
 // eslint-disable-next-line no-unused-vars
 import { MenuItem } from "../models/MenuItem";
 // eslint-disable-next-line no-unused-vars
-import { ViewContext } from "../models/ViewContext";
-// eslint-disable-next-line no-unused-vars
-import { DrawerItem } from "../models/DrawerItem";
-// eslint-disable-next-line no-unused-vars
 import { AuthTokensPayload } from "../models/AuthTokensPayload";
 import { AuthUserProfile } from "../models/AuthUserProfile";
 import { StringUtils } from "../common/StringUtils";
 import { Translation } from "../models/Translation";
+import { AppInfo } from "../models/AppInfo";
+// eslint-disable-next-line no-unused-vars
+import { View } from "../models/View";
 
 Vue.use(Vuex);
 
@@ -24,18 +23,12 @@ const initialState = {
 	app: {
 		isReady: false,
 		drawerItems: [],
-		/** @type {ViewContext[]} */
+		/** @type {View[]} */
 		viewTabs: [],
 		viewTabIndex: null,
 		page: null,
 		isAuthenticated: false,
-		info: {
-			author: null,
-			copyright: null,
-			description: null,
-			version: null,
-			supportURL: null,
-		},
+		info: new AppInfo(),
 		user: new AuthUserProfile(),
 		config: {
 			fileUploadMaxSize: null,
@@ -53,32 +46,9 @@ const store = new Vuex.Store({
 		/**
 		 *
 		 * @param {initialState} state
-		 * @param {Object} info
+		 * @param {AppInfo} info
 		 */
 		[$.mutations.APP_SET_INFO](state, info) {
-			// state.app.info.author = info["application.author"];
-			// state.app.info.copyright = info["application.copyright"];
-			// state.app.info.description = info["application.description"];
-			// state.app.info.help = info["application.help"];
-			// state.app.info.home = info["application.home"];
-			// state.app.info.mode = info["application.mode"];
-			// state.app.info.name = info["application.name"];
-			// state.app.info.sdk = info["application.sdk"];
-			// state.app.info.themes.splice(0, ...info["application.themes"]);
-			// state.app.info.version = info["application.version"];
-			// state.app.user.action = info["user.action"];
-			// state.app.user.group = info["user.group"];
-			// state.app.user.id = info["user.id"];
-			// state.app.user.image = info["user.image"];
-			// state.app.user.lang = info["user.lang"];
-			// state.app.user.login = info["user.login"];
-			// state.app.user.name = info["user.name"];
-			// state.app.user.navigator = info["user.navigator"];
-			// state.app.user.noHelp = info["user.noHelp"];
-			// state.app.user.singleTab = info["user.singleTab"];
-			// state.app.user.technical = info["user.technical"];
-			// state.app.config.viewMaxTabs = info["view.tabs.max"];
-			// state.app.config.fileUploadMaxSize = info["file.upload.size"];
 			state.app.info = info;
 		},
 		/**
@@ -87,7 +57,6 @@ const store = new Vuex.Store({
 		 * @param {MenuItem[]} menuItems
 		 */
 		[$.mutations.APP_SET_DRAWERITEMS](state, menuItems) {
-			//	let drawerItems = UserInterfaceService.TransformMenuItemsToDrawerItems(menuItems);
 			state.app.drawerItems.splice(0);
 			state.app.drawerItems.push(...menuItems);
 		},
@@ -110,10 +79,21 @@ const store = new Vuex.Store({
 		/**
 		 *
 		 * @param {initialState} state
-		 * @param {AuthUserProfile} userProfile
+		 * @param {AuthTokensPayload} authTokens
 		 */
-		[$.mutations.APP_SET_USERPROFILE](state, userProfile) {
-			state.app.user = userProfile;
+		[$.mutations.APP_SET_AUTHTOKEN](state, authTokens) {
+			console.log(authTokens);
+			if (authTokens) {
+				sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
+				let decodedProfile = window.atob(authTokens.access_token.split(".")[1]);
+				/** @type {AuthUserProfile} */
+				let userProfile = JSON.parse(decodedProfile);
+				console.log(userProfile);
+				state.app.user = userProfile;
+			} else {
+				sessionStorage.removeItem("authTokens");
+				state.app.user = new AuthUserProfile();
+			}
 		},
 		/**
 		 *
@@ -153,14 +133,11 @@ const store = new Vuex.Store({
 
 				const authTokens = JSON.parse(sessionStorage.getItem("authTokens"));
 				if (authTokens) {
-					let decodedProfile = window.atob(authTokens.access_token.split(".")[1]);
-					/** @type {AuthUserProfile} */
-					let userProfile = JSON.parse(decodedProfile);
+					context.commit($.mutations.APP_SET_AUTHTOKEN, authTokens);
 					context.commit($.mutations.APP_SET_AUTHENTICATION, true);
-					context.commit($.mutations.APP_SET_USERPROFILE, userProfile);
 				} else {
+					context.commit($.mutations.APP_SET_AUTHTOKEN, null);
 					context.commit($.mutations.APP_SET_AUTHENTICATION, false);
-					context.commit($.mutations.APP_SET_USERPROFILE, new AuthUserProfile());
 				}
 			} catch (/** @type {Error}*/ ex) {
 				console.error(ex);
@@ -194,14 +171,9 @@ const store = new Vuex.Store({
 			if (!result.hasError) {
 				/** @type {AuthTokensPayload} */
 				const authTokens = result.response;
-				sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
-				let decodedProfile = window.atob(authTokens.access_token.split(".")[1]);
-				/** @type {AuthUserProfile} */
-				let userProfile = JSON.parse(decodedProfile); //TODO: @mso -> to save in store
-				console.log(userProfile);
 
+				context.commit($.mutations.APP_SET_AUTHTOKEN, authTokens);
 				context.commit($.mutations.APP_SET_AUTHENTICATION, true);
-				context.commit($.mutations.APP_SET_USERPROFILE, userProfile);
 				context.commit($.mutations.APP_SET_PAGE, "page-main");
 			} else {
 				console.error(result.exception);
@@ -211,62 +183,36 @@ const store = new Vuex.Store({
 		/**
 		 *
 		 * @param {ActionContext<initialState>} context
-		 * @param {DrawerItem} drawerItem
+		 * @param {MenuItem} menuItem
 		 */
-		async [$.actions.APP_OPEN_LINK](context, drawerItem) {
-			let result = await RestApiService.post(`${$api.POST_ACTION}${drawerItem.action}`, {
-				model: "com.axelor.meta.db.MetaAction",
+		async [$.actions.APP_OPEN_VIEW](context, menuItem) {
+			let result = await RestApiService.get($api.GET_META_VIEW, {
+				viewName: menuItem.viewName,
 			});
 
 			if (!result.hasError) {
-				/** @type {ViewContext} */
-				let viewContext = result.response.data[0].view;
-				if (!viewContext.icon) viewContext.icon = drawerItem.baseIcon;
-				viewContext.color = drawerItem.baseColor;
-				context.commit($.mutations.APP_ADD_VIEWTAB, viewContext);
+				console.log(result.response);
+				/** @type {View} */
+				let view = result.response;
+				if (!view.icon) view.icon = menuItem.icon;
+				if (!view.color) view.color = menuItem.color;
+				context.commit($.mutations.APP_ADD_VIEWTAB, view);
 			} else {
 				console.error(result.exception);
-				alert(result.clientMessage);
+				alert(result.clientMessage); //TODO: @michaelsogos -> show error page
 			}
-		},
-		/**
-		 *
-		 * @param {ActionContext<initialState>} context
-		 * @param {ViewContext} viewContext
-		 */
-		async [$.actions.APP_OPEN_VIEW](context, viewContext) {
-			context.commit($.mutations.APP_ADD_VIEWTAB, viewContext);
 		},
 		/**
 		 *
 		 * @param {ActionContext<initialState>} context
 		 */
 		async [$.actions.APP_LOGOUT_USER](context) {
-			sessionStorage.removeItem("authTokens");
-
+			context.commit($.mutations.APP_SET_AUTHTOKEN, null);
 			context.commit($.mutations.APP_SET_AUTHENTICATION, false);
-			context.commit($.mutations.APP_SET_USERPROFILE, new AuthUserProfile());
 			context.commit($.mutations.APP_SET_PAGE, "page-login");
 		},
 	},
 	getters: {
-		[$.getters.APP_GET_VIEWDEFINITION]: (state) => async (context, view, model) => {
-			let result = await RestApiService.post($api.POST_VIEW, {
-				data: {
-					context: context,
-					name: view.name,
-					type: view.type,
-				},
-				model: model,
-			});
-
-			if (!result.hasError) {
-				return result.response.data;
-			} else {
-				console.error(result.exception);
-				alert(result.clientMessage);
-			}
-		},
 		[$.getters.APP_GET_RECORDS]: (state) => async (context, domainFilter, model, fields, limit, offset, sortBy) => {
 			let _domainContext = context;
 			_domainContext._model = model;
