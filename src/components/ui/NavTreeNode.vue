@@ -1,13 +1,8 @@
 <template>
     <div>
-        <v-list-item
-            @click="onClickItem"
-            :input-value="expand"
-            class="my-0 pl-4"
-            :style="nodeStyle()"
-        >
-            <v-list-item-icon class="mr-4">
-                <v-icon dark>{{node.icon}}</v-icon>
+        <v-list-item @click="onClickItem" :input-value="expand" class="my-0" :style="nodeStyle()">
+            <v-list-item-icon>
+                <v-icon dark :small="isSubTree()">{{node.icon}}</v-icon>
             </v-list-item-icon>
             <v-list-item-title class="font-weight-regular">
                 <span>{{ node.labelKey | translate }}</span>
@@ -63,6 +58,12 @@ export default {
                 return ""; //`border-left: 5px solid ${this.node.color || 'transparent'} !important`;
             else
                 return "padding-left: 15px;";
+        },
+        isSubTree() {
+            if (this.$parent.$parent.$options._componentTag == "h-nav-tree")
+                return false;
+            else
+                return true;
         }
     }
 };

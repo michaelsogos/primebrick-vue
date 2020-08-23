@@ -85,7 +85,10 @@ export default {
     },
     mounted() {
         this.$store.dispatch($.actions.APP_EXEC_INIT).then(() => {
-            this.$store.commit($.mutations.APP_SET_PAGE, "page-login");
+            if (this.$store.state.app.isAuthenticated)
+                this.$store.commit($.mutations.APP_SET_PAGE, "page-main");
+            else
+                this.$store.commit($.mutations.APP_SET_PAGE, "page-login");
         });
     },
 }

@@ -27,7 +27,7 @@ const initialState = {
 		/** @type {ViewContext[]} */
 		viewTabs: [],
 		viewTabIndex: null,
-		page: "page-login",
+		page: null,
 		isAuthenticated: false,
 		info: {
 			author: null,
@@ -150,6 +150,18 @@ const store = new Vuex.Store({
 			try {
 				let metaTranslations = await RestApiService.get($api.GET_META_TRANSLATIONS, null, true);
 				context.commit($.mutations.APP_SET_TRANSLATIONS, metaTranslations.response);
+
+				const authTokens = JSON.parse(sessionStorage.getItem("authTokens"));
+				if (authTokens) {
+					let decodedProfile = window.atob(authTokens.access_token.split(".")[1]);
+					/** @type {AuthUserProfile} */
+					let userProfile = JSON.parse(decodedProfile);
+					context.commit($.mutations.APP_SET_AUTHENTICATION, true);
+					context.commit($.mutations.APP_SET_USERPROFILE, userProfile);
+				} else {
+					context.commit($.mutations.APP_SET_AUTHENTICATION, false);
+					context.commit($.mutations.APP_SET_USERPROFILE, new AuthUserProfile());
+				}
 			} catch (/** @type {Error}*/ ex) {
 				console.error(ex);
 				alert(ex.clientMessage || ex.message);
@@ -180,7 +192,6 @@ const store = new Vuex.Store({
 			let result = await RestApiService.post($api.POST_USER_LOGIN, credentials);
 
 			if (!result.hasError) {
-				debugger;
 				/** @type {AuthTokensPayload} */
 				const authTokens = result.response;
 				sessionStorage.setItem("authTokens", JSON.stringify(authTokens));
