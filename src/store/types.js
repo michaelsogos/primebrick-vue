@@ -7,7 +7,7 @@ module.exports = {
 		APP_EXEC_OPTIN: "actionAppExecOptin",
 	},
 	getters: {
-		// APP_GET_RECORDS: "getterAppGetRecords",
+		APP_GET_RECORDS: "getterAppGetRecords",
 		// APP_GET_RECORD: "getterAppGetRecord",
 		APP_TRANSLATE_STRING: "getterAppTranslateString",
 		APP_GET_TRANSLATION: "getterAppGetTranslation",

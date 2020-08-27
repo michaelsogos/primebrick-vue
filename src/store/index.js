@@ -16,6 +16,8 @@ import { Translation } from "../models/Translation";
 import { AppInfo } from "../models/AppInfo";
 // eslint-disable-next-line no-unused-vars
 import { View } from "../models/View";
+// eslint-disable-next-line no-unused-vars
+import { Query } from "../models/Query";
 
 Vue.use(Vuex);
 
@@ -210,30 +212,25 @@ const store = new Vuex.Store({
 		},
 	},
 	getters: {
-		[$.getters.APP_GET_RECORDS]: (state) => async (context, domainFilter, model, fields, limit, offset, sortBy) => {
-			let _domainContext = context;
-			_domainContext._model = model;
+		[$.getters.APP_GET_RECORDS]: (state) =>
+			/**
+			 *
+			 * @param {Query} query
+			 * @param {Number} limit
+			 * @param {Number} offset
+			 * @param {any} sortBy
+			 * @returns
+			 */
+			async (query, limit, offset) => {
+				let result = await RestApiService.post($api.POST_GET_DATA, query);
 
-			let result = await RestApiService.post(`${$api.POST_REST}${model}/search`, {
-				data: {
-					criteria: [], //TODO: @mso -> add support for custom search
-					operator: "and", //TODO: @mso -> add support for custom search
-					_domain: domainFilter,
-					_domainContext: _domainContext,
-				},
-				fields: fields,
-				limit: limit,
-				offset: offset,
-				sortBy: sortBy,
-			});
-
-			if (!result.hasError) {
-				return result.response;
-			} else {
-				console.error(result.exception);
-				alert(result.clientMessage);
-			}
-		},
+				if (!result.hasError) {
+					return result.response;
+				} else {
+					console.error(result.exception);
+					alert(result.clientMessage);
+				}
+			},
 		[$.getters.APP_GET_RECORD]: (state) => async (model, fields, recordId) => {
 			let result = await RestApiService.post(`${$api.POST_REST}${model}/${recordId}/fetch`, {
 				fields: fields,

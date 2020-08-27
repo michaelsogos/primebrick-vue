@@ -57,10 +57,6 @@
                 :server-items-length="gridTotal"
                 :footer-props="{
                                 showFirstLastPage: true,
-                                firstIcon: 'fa-angle-double-left',
-                                lastIcon: 'fa-angle-double-right',
-                                prevIcon: 'fa-angle-left',
-                                nextIcon: 'fa-angle-right',
                                 itemsPerPageOptions:[50]
                                 }"
                 @update:page="onPageChange"
@@ -74,12 +70,23 @@
                 <template v-slot:item.actions="{ item }" class="pa-0">
                     <div class="actionsCell">
                         <v-icon
-                            v-if="viewDefinition.view.editIcon"
+                            v-if="view.actions.onEdit.enableRowButton"
                             small
                             class="mr-2"
                             @click="onEditItem(item)"
-                        >fa-pencil</v-icon>
-                        <v-icon small class="mr-2" @click="onEditItem(item)">fa-trash</v-icon>
+                        >mdi-pencil</v-icon>
+                        <v-icon
+                            v-if="view.actions.onDelete.enableRowButton"
+                            small
+                            class="mr-2"
+                            @click="onEditItem(item)"
+                        >mdi-delete-alert</v-icon>
+                        <v-icon
+                            v-if="view.actions.onArchive.enableRowButton"
+                            small
+                            class="mr-2"
+                            @click="onEditItem(item)"
+                        >mdi-trash-can</v-icon>
                     </div>
                 </template>
             </v-data-table>
@@ -92,23 +99,20 @@ import $ from "../../store/types";
 // eslint-disable-next-line no-unused-vars
 import { ViewGridDefinition } from "../../models/ViewGridDefinition";
 // eslint-disable-next-line no-unused-vars
-import { SearchResult } from "../../models/SearchResult";
-import { LowLevelUtils } from "../../common/LowLevelUtils";
+import { QueryResult } from "../../models/QueryResult";
+// import { LowLevelUtils } from "../../common/LowLevelUtils";
 // eslint-disable-next-line no-unused-vars
-import { View, ViewNameType } from 'src/models/View';
+import { View, ViewNameType, ViewSort } from 'src/models/View';
+import { Query } from 'src/models/Query';
 
 export default {
     name: "view-grid",
     props: {
-        view: View,
+        view: Object,
     },
     data: function () {
         return {
-            /** @type {ViewGridDefinition} */
-            viewDefinition: null,
-            /** @type {ViewType} */
-            viewType: null,
-            /** @type {SearchResult} */
+            /** @type {QueryResult} */
             viewData: null,
             viewDataLoading: false,
             viewDataPageNumber: 1,
@@ -119,18 +123,27 @@ export default {
     computed: {
         /** @returns {[]} */
         gridHeaders() {
-            if (!this.viewDefinition) return [];
+            if (!this.view) return [];
 
-            let headers = this.viewDefinition.view.items.map(item => {
+            /** @type {View} */
+            const thisView = this.view;
+
+            let headers = thisView.definition.fields.map(item => {
                 return {
-                    text: item.title || this.viewDefinition.fields.find(field => field.name == item.name).title,
-                    value: item.name,
-                    width: item.width,
-                    groupable: item.name == 'statusSelect' ? true : false
+                    text: this.$options.filters.translate(item.labelKey),
+                    value: item.name
                 };
             });
 
-            if (this.viewDefinition.view.editIcon)
+            let showActionsColumn = false;
+            for (const action in thisView.actions) {
+                if (thisView.actions[action].enableRowButton) {
+                    showActionsColumn = true;
+                    break;
+                }
+            }
+
+            if (showActionsColumn)
                 headers.push({
                     text: '',
                     value: 'actions',
@@ -144,54 +157,56 @@ export default {
         /** @returns {Number} */
         gridTotal() {
             if (!this.viewData || !this.viewData.data || this.viewData.data.length <= 0) return 0;
-            return this.viewData.total;
+            return this.viewData.count;
         },
         /** @returns {[]} */
         gridRecords() {
             if (!this.viewData || !this.viewData.data || this.viewData.data.length <= 0) return [];
+            return this.viewData.data;
 
-            let expressionEvaluators = [];
-            for (let hilite of this.viewDefinition.view.hilites) {
-                let evaluator = {
-                    eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], hilite.condition),
-                    cssClasses: []
-                };
+            // let expressionEvaluators = [];
+            // for (let hilite of this.viewDefinition.view.hilites) {
+            //     let evaluator = {
+            //         eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], hilite.condition),
+            //         cssClasses: []
+            //     };
 
-                if (hilite.background) evaluator.cssClasses.push(...[LowLevelUtils.cssClassNameSanitizer(hilite.background), "lighten-4"]);
-                if (hilite.color) evaluator.cssClasses.push(`${hilite.color}--text`);
+            //     if (hilite.background) evaluator.cssClasses.push(...[LowLevelUtils.cssClassNameSanitizer(hilite.background), "lighten-4"]);
+            //     if (hilite.color) evaluator.cssClasses.push(`${hilite.color}--text`);
 
-                expressionEvaluators.push(evaluator);
-            }
+            //     expressionEvaluators.push(evaluator);
+            // }
 
-            let records = [];
-            for (let item of this.viewData.data) {
-                let record = {
-                    id: item.id
-                };
-                for (let field of this.viewDefinition.fields) {
-                    if (!Object.prototype.hasOwnProperty.call(item, field.name))
-                        record[field.name] = null;
-                    else if (field.targetName) {
-                        record[`__${field.name}`] = item[field.name];
-                        record[field.name] = item[field.name] != null ? item[field.name][field.targetName] : null;
-                    } else if (field.selectionList && field.selectionList.length > 0) {
-                        record[`__${field.name}`] = item[field.name];
-                        let label = field.selectionList.find(l => l.value == item[field.name]).title;
-                        record[field.name] = item[field.name] != null ? label : null;
-                    }
-                    else
-                        record[field.name] = item[field.name];
-                }
+            // let records = [];
+            // for (let item of this.viewData.data) {
+            //     let record = {
+            //         id: item.id
+            //     };
 
-                for (let evaluator of expressionEvaluators) {
-                    if (evaluator.eval(item))
-                        record.__cssClasses = evaluator.cssClasses;
-                }
+            //     for (let field of this.view.definition.fields) {
+            //         if (!Object.prototype.hasOwnProperty.call(item, field.name))
+            //             record[field.name] = null;
+            //         else if (field.targetName) {
+            //             record[`__${field.name}`] = item[field.name];
+            //             record[field.name] = item[field.name] != null ? item[field.name][field.targetName] : null;
+            //         } else if (field.selectionList && field.selectionList.length > 0) {
+            //             record[`__${field.name}`] = item[field.name];
+            //             let label = field.selectionList.find(l => l.value == item[field.name]).title;
+            //             record[field.name] = item[field.name] != null ? label : null;
+            //         }
+            //         else
+            //             record[field.name] = item[field.name];
+            //     }
 
-                records.push(record);
-            }
+            //     for (let evaluator of expressionEvaluators) {
+            //         if (evaluator.eval(item))
+            //             record.__cssClasses = evaluator.cssClasses;
+            //     }
 
-            return records;
+            //     records.push(record);
+            // }
+
+            // return records;
         },
     },
     methods: {
@@ -217,8 +232,6 @@ export default {
             formViewContext.viewType = "form";
             formViewContext.context._id = item.id;
             this.$store.dispatch($.actions.APP_OPEN_VIEW, formViewContext);
-            // this.viewContext.viewType = "form"; //@mso -> It will change dynamically the view type remaining on the same tab (like axelor do)
-
         },
         onDoubleClickRow(event, row) {
             this.onEditItem(row.item);
@@ -245,22 +258,34 @@ export default {
 
             return cssClasses;
         },
-        async loadViewDefinition() {
-            this.viewDefinition = await this.$store.getters[$.getters.APP_GET_VIEWDEFINITION](this.viewContext.context, this.viewType, this.viewContext.model);
-        },
         async loadData() {
             this.viewDataLoading = true;
-            let dataFields = this.viewDefinition.fields.map(item => { return item.name; });
-            let sortFields = [];
+
+            /** @type {View} */
+            const thisView = this.view;
+
+            const query = new Query();
+            query.entity = thisView.definition.entity;
+            query.fields = thisView.definition.fields.map(item => { return item.name; });
+            query.filters = thisView.definition.filters;
+            query.take = 50;
+            query.skip = (this.viewDataPageNumber - 1) * 50;
+
+
+
             if (this.viewDataSortFields.length > 0) {
                 for (let idx = 0; idx < this.viewDataSortFields.length; idx++) {
-                    sortFields.push(`${this.viewDataSortDirections[idx] ? '-' : ''}${this.viewDataSortFields[idx]}`);
+                    const sort = new ViewSort();
+                    sort.field = this.viewDataSortFields[idx];
+                    sort.direction = this.viewDataSortDirections[idx] ? 'DESC' : 'ASC';
+                    query.sorts.push(sort);
                 }
             }
-            else
-                sortFields.push(this.viewDefinition.view.orderBy);
+            else if (thisView.definition.sorts) {
+                query.sorts = thisView.definition.sorts;
+            }
 
-            this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](this.viewContext.context, this.viewContext.domain, this.viewContext.model, dataFields, 50, (this.viewDataPageNumber - 1) * 50, sortFields);
+            this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
             this.viewDataLoading = false;
         },
         computeCssColor(/** @type {String} */ color) {
@@ -279,18 +304,11 @@ export default {
         }
     },
     mounted() {
-        console.log(this.view.alternativeViews);
-        let self = this;
-        this.viewType = this.viewContext.views[this.viewButtonSelected];
-        this.loadViewDefinition().then(() => {
-            self.loadData().catch(ex => {
-                console.error(ex);
-                alert(ex.message);
-            });
-        }).catch(ex => {
+        this.loadData().catch(ex => {
             console.error(ex);
             alert(ex.message);
         });
+
     }
 }
 </script>
@@ -305,8 +323,8 @@ export default {
     background: #f6f6f6;
 }
 
-.actionsCell {
+/* .actionsCell {
     margin-left: -16px;
     margin-right: -12px;
-}
+} */
 </style>

@@ -110,25 +110,20 @@ function prepareHttpHeader() {
 }
 
 async function refreshAccessToken() {
-	debugger;
 	const tokens = JSON.parse(sessionStorage.getItem("authTokens"));
 	const headers = prepareHttpHeader();
 
 	try {
-		debugger;
 		let result = await axios.post(
 			`${config.restApiEndpoint}/${$api.POST_REFRESH_TOKEN}`,
 			{ refresh_token: tokens.refresh_token },
 			{ headers: headers }
 		);
 		const authTokens = result.data;
-		debugger;
 		store.commit($.mutations.APP_SET_AUTHTOKEN, authTokens);
-		debugger;
 		console.info("Access token refreshed!");
 		return true;
 	} catch (ex) {
-		debugger;
 		console.error(ex);
 		return false;
 	}

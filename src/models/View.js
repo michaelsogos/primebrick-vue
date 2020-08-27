@@ -12,6 +12,27 @@ export class View {
 		this.definition = null;
 		/** @type {ViewNameType[]} */
 		this.alternativeViews = [];
+		/** @type {ViewActions} */
+		this.actions = null;
+	}
+}
+
+export class ViewDefinition {
+	constructor() {
+		/** @type {String} */
+		this.entity = null;
+		/** @type {Number} */
+		this.entityId = null; //TODO: @michaelsogos -> Move to context
+		/** @type {String} */
+		this.type = null;
+		/** @type {ViewField[]} */
+		this.fields = [];
+		/** @type {ViewSort[]} */
+		this.sorts = [];
+		/** @type {String[]} */
+		this.perms = [];
+		/** @type {ViewFilter[]} */
+		this.filters = [];
 	}
 }
 
@@ -74,18 +95,12 @@ export class ViewFieldSelection {
 	}
 }
 
-export class ViewDefinition {
+export class ViewSort {
 	constructor() {
 		/** @type {String} */
-		this.entity = null;
-		/** @type {Number} */
-		this.entityId = null; //TODO: @michaelsogos -> Move to context
+		this.field = null;
 		/** @type {String} */
-		this.type = null;
-		/** @type {ViewField[]} */
-		this.fields = [];
-		/** @type {String[]} */
-		this.perms = [];
+		this.direction = null;
 	}
 }
 
@@ -95,5 +110,51 @@ export class ViewNameType {
 		this.name = null;
 		/** @type {String} */
 		this.type = null;
+	}
+}
+
+export class ViewFilter {
+	constructor() {
+		/** @type {String} */
+		this.leftOperator = null;
+		/** @type {String} */
+		this.expressionOperator = null;
+		/** @type {String[]} */
+		this.expressions = [];
+	}
+}
+
+export class ViewActions {
+	constructor() {
+		this.onEdit = {
+			/** @type {String} */
+			view: null,
+			/** @type {Boolean} */
+			enableToolbar: false,
+			/** @type {Boolean} */
+			enableDoubleClick: false,
+			/** @type {Boolean} */
+			enableRowButton: false,
+			/** @type {Boolean} */
+			enableMenu: false,
+		};
+
+		this.onDelete = {
+			/** @type {Boolean} */
+			enableToolbar: false,
+			/** @type {Boolean} */
+			enableRowButton: false,
+			/** @type {Boolean} */
+			enableMenu: false,
+		};
+
+		this.onArchive = {
+			/** @type {Boolean} */
+			enableToolbar: false,
+			/** @type {Boolean} */
+			enableRowButton: false,
+			/** @type {Boolean} */
+			enableMenu: false,
+		};
 	}
 }
