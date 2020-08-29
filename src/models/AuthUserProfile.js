@@ -8,6 +8,8 @@ export class AuthUserProfile {
 		this.firstName = null;
 		/** @type {String} */
 		this.lastName = null;
+		/** @type {String} */
+		this.languageCode = null;
 		/** @type {String[]} */
 		this.roles = [];
 	}

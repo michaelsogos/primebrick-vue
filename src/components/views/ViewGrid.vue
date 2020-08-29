@@ -10,40 +10,87 @@
                     height="36"
                     :style="`border-bottom: 2px solid ${computeCssColor(view.color)} !important`"
                 >
-                    <v-btn text tile class="caption primary--text">
-                        <v-icon small left>mdi-plus</v-icon>add
+                    <v-btn
+                        text
+                        tile
+                        class="caption primary--text"
+                        v-if="checkToolbarButtonVisibility('add')"
+                        @click="onAddItem()"
+                    >
+                        <v-icon small left>mdi-plus</v-icon>
+                        {{ 'add' | translate}}
                     </v-btn>
                     <v-btn text tile class="caption error--text">
-                        <v-icon small left>mdi-trash-can</v-icon>delete
+                        <v-icon small left>mdi-trash-can</v-icon>
+                        {{ 'delete' | translate}}
                     </v-btn>
                     <v-btn text tile class="caption primary--text" @click="onRefresh">
-                        <v-icon small left>mdi-refresh</v-icon>aggiorna
+                        <v-icon small left>mdi-refresh</v-icon>
+                        {{ 'refresh' | translate}}
                     </v-btn>
+
                     <v-spacer></v-spacer>
-                    <v-btn-toggle v-if="view.alternativeViews.length > 0" :value="0" dark>
-                        <v-btn
-                            small
-                            :color="computeColor(view.color)"
-                            :title="view.definition.type"
-                        >
+                    <v-btn-toggle
+                        v-if="view.alternativeViews.length > 0"
+                        :value="0"
+                        background-color="transparent"
+                        group
+                        :color="computeColor(view.color)"
+                        class="pa-0 ma-0"
+                    >
+                        <v-btn small :title="view.definition.type">
                             <v-icon small>{{getViewIcon(view.definition.type)}}</v-icon>
                         </v-btn>
                         <template v-for="(item) in view.alternativeViews">
-                            <v-btn
-                                :key="item.type"
-                                small
-                                :color="computeColor(view.color)"
-                                :title="item.type"
-                            >
+                            <v-btn :key="item.type" small :title="item.type">
                                 <v-icon small>{{getViewIcon(item.type)}}</v-icon>
                             </v-btn>
                         </template>
                     </v-btn-toggle>
+
+                    <v-menu offset-y tile>
+                        <template v-slot:activator="{ on }">
+                            <v-btn icon small v-on="on" v-if="checkMenuVisibility()">
+                                <v-icon>mdi-dots-vertical</v-icon>
+                            </v-btn>
+                        </template>
+
+                        <v-list
+                            dense
+                            rounded
+                            dark
+                            :class="[`${computeColor('primary')}`, 'pa-1', 'ma-0']"
+                        >
+                            <v-list-item
+                                v-for="(item, idx) in getMenuLink()"
+                                :key="idx"
+                                @click="onOpenLink(item)"
+                            >
+                                <v-list-item-icon>
+                                    <v-icon>{{item.icon}}</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-title>{{ item.labelKey | translate }}</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
                 </v-toolbar>
             </template>
             <template v-slot:footer>
                 <div></div>
             </template>
+            <v-btn
+                :color="computeColor(view.color)"
+                fab
+                absolute
+                dark
+                bottom
+                right
+                style="bottom:50px"
+                @click="onAddItem()"
+                v-if="checkFabButtonVisibility()"
+            >
+                <v-icon>mdi-plus</v-icon>
+            </v-btn>
             <v-data-table
                 :headers="gridHeaders"
                 :items="gridRecords"
@@ -57,25 +104,35 @@
                 :server-items-length="gridTotal"
                 :footer-props="{
                                 showFirstLastPage: true,
-                                itemsPerPageOptions:[50]
+                                itemsPerPageOptions:[50],
                                 }"
                 @update:page="onPageChange"
                 @update:sort-by="onSortField"
                 @update:sort-desc="onSortDescendant"
                 @dblclick:row="onDoubleClickRow"
+                @click:row="onClickRow"
                 :loading="viewDataLoading"
                 show-group-by
                 show-select
+                :single-select="!getGridOption('enableMultiSelect')"
+                v-model="viewSelectedRows"
             >
-                <template v-slot:item.actions="{ item }" class="pa-0">
+                <!-- eslint-disable-next-line vue/valid-v-slot -->
+                <template v-slot:item.actions="{ item }">
                     <div class="actionsCell">
                         <v-icon
-                            v-if="view.actions.onEdit.enableRowButton"
+                            v-if="checkRowButtonVisibility('open')"
                             small
                             class="mr-2"
-                            @click="onEditItem(item)"
-                        >mdi-pencil</v-icon>
+                            @click.stop="onOpenItem(item)"
+                        >mdi-eye</v-icon>
                         <v-icon
+                            v-if="checkRowButtonVisibility('edit')"
+                            small
+                            class="mr-2"
+                            @click.stop="onEditItem(item)"
+                        >mdi-pencil</v-icon>
+                        <!--  <v-icon
                             v-if="view.actions.onDelete.enableRowButton"
                             small
                             class="mr-2"
@@ -86,7 +143,7 @@
                             small
                             class="mr-2"
                             @click="onEditItem(item)"
-                        >mdi-trash-can</v-icon>
+                        >mdi-trash-can</v-icon>-->
                     </div>
                 </template>
             </v-data-table>
@@ -102,7 +159,7 @@ import { ViewGridDefinition } from "../../models/ViewGridDefinition";
 import { QueryResult } from "../../models/QueryResult";
 // import { LowLevelUtils } from "../../common/LowLevelUtils";
 // eslint-disable-next-line no-unused-vars
-import { View, ViewNameType, ViewSort } from 'src/models/View';
+import { View, ViewNameType, ViewSort, ViewActions } from 'src/models/View';
 import { Query } from 'src/models/Query';
 
 export default {
@@ -117,7 +174,8 @@ export default {
             viewDataLoading: false,
             viewDataPageNumber: 1,
             viewDataSortFields: [],
-            viewDataSortDirections: []
+            viewDataSortDirections: [],
+            viewSelectedRows: []
         };
     },
     computed: {
@@ -135,21 +193,25 @@ export default {
                 };
             });
 
-            let showActionsColumn = false;
+            let actionButtonsCount = 0;
             for (const action in thisView.actions) {
                 if (thisView.actions[action].enableRowButton) {
-                    showActionsColumn = true;
-                    break;
+                    actionButtonsCount++;
+                }
+                if (thisView.actions[action].enableRowButton) {
+                    actionButtonsCount++;
                 }
             }
 
-            if (showActionsColumn)
+            if (actionButtonsCount > 0)
                 headers.push({
                     text: '',
                     value: 'actions',
                     sortable: false,
                     groupable: false,
                     align: 'end',
+                    width: (24 * actionButtonsCount),
+                    class: "pa-0"
                 });
 
             return headers;
@@ -215,6 +277,10 @@ export default {
             this.loadData();
         },
         onRefresh() {
+            this.viewDataPageNumber = 1;
+            this.viewDataSortFields = [];
+            this.viewDataSortDirections = [];
+            this.viewSelectedRows = [];
             this.loadData();
         },
         onSortField(/** @type {String[] } */ sortFields) {
@@ -227,14 +293,112 @@ export default {
             this.viewDataSortDirections.push(...sortDirections);
             this.loadData();
         },
+        onOpenItem(item) {
+            alert(item.id);
+        },
         onEditItem(item) {
             let formViewContext = Object.assign({}, this.viewContext);
             formViewContext.viewType = "form";
             formViewContext.context._id = item.id;
             this.$store.dispatch($.actions.APP_OPEN_VIEW, formViewContext);
         },
-        onDoubleClickRow(event, row) {
-            this.onEditItem(row.item);
+        onAddItem() {
+            /** @type {View} */
+            const thisView = this.view;
+
+            alert(thisView.actions.add.view);
+        },
+        onDoubleClickRow(/** @type {Event}*/event, row) {
+            event.stopPropagation();
+
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.actions && thisView.actions.open && thisView.actions.open.enableDoubleClick)
+                this.onOpenItem(row.item);
+            else if (thisView.actions && thisView.actions.edit && thisView.actions.edit.enableDoubleClick)
+                this.onEditItem(row.item);
+        },
+        onClickRow(rowData, row) {
+            row.select(!row.isSelected);
+        },
+        onClickToolbarButton(/** @type {string} */actionName) {
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].view)
+                alert(thisView.actions[actionName].view);
+        },
+        onOpenLink(/** @type {{ labelKey: String, view: String, action: String, icon: String }} */link) {
+            alert(link.action);
+        },
+        /** @returns {Boolean} */
+        checkRowButtonVisibility(/** @type {string} */ actionName) {
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableRowButton)
+                return true;
+            else false;
+        },
+        /** @returns {Boolean} */
+        checkToolbarButtonVisibility(/** @type {string} */ actionName) {
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableToolbarButton)
+                return true;
+            else false;
+        },
+        /** @returns {Boolean} */
+        checkMenuVisibility() {
+            /** @type {View} */
+            const thisView = this.view;
+
+            let showMenu = false;
+            for (const action in thisView.actions) {
+                if (thisView.actions[action].enableMenuLink == true) {
+                    showMenu = true;
+                    break;
+                }
+
+            }
+
+            return showMenu;
+        },
+        checkFabButtonVisibility() {
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.actions && thisView.actions.add && thisView.actions.add.enableFloatingButton == true)
+                return true;
+            else false;
+        },
+        /** @returns {Boolean} */
+        getGridOption(/** @type {string} */ optionName) {
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (thisView.options) {
+                if (thisView.options[optionName] == true) return true;
+                else return false;
+            }
+            else return false;
+        },
+        /** @returns {{ labelKey: String, view: String, action: String, icon: String }[]} */
+        getMenuLink() {
+            /** @type {View} */
+            const thisView = this.view;
+
+            const links = [];
+            for (const action in thisView.actions) {
+                if (thisView.actions[action].enableMenuLink == true) {
+                    links.push({ labelKey: action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
+                }
+
+            }
+
+            return links;
         },
         getViewIcon(/** @type {string} */ viewType) {
             switch (viewType) {
@@ -248,6 +412,14 @@ export default {
                     return "mdi-calendar-month";
                 default:
                     return "mdi-view-compact";
+            }
+        },
+        getActionIcon(/** @type {string} */ actionName) {
+            switch (actionName) {
+                case "add":
+                    return 'mdi-plus';
+                default:
+                    return "";
             }
         },
         // eslint-disable-next-line no-unused-vars
@@ -308,7 +480,6 @@ export default {
             console.error(ex);
             alert(ex.message);
         });
-
     }
 }
 </script>

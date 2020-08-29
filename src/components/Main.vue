@@ -20,10 +20,11 @@
                         <v-btn
                             small
                             icon
-                            class="ma-0 ml-3 primary--text"
+                            class="ma-0 ml-3 "
+                            :style="`color: ${computeColor(item.color)}`"
                             @click.stop="onCloseTab(index)"
                         >
-                            <v-icon color="error" small>mdi-close-circle</v-icon>
+                            <v-icon  small>mdi-close-circle</v-icon>
                         </v-btn>
                     </v-tab>
                 </v-tabs>

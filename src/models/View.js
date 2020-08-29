@@ -14,6 +14,8 @@ export class View {
 		this.alternativeViews = [];
 		/** @type {ViewActions} */
 		this.actions = null;
+		/** @type {ViewOptions} */
+		this.options = null;
 	}
 }
 
@@ -126,15 +128,31 @@ export class ViewFilter {
 
 export class ViewActions {
 	constructor() {
-		this.onEdit = {
+		this.open = {
+			/** @type {String} */
+			view: null,
+			/** @type {Boolean} */
+			enableDoubleClick: false,
+			/** @type {Boolean} */
+			enableRowButton: false,
+		};
+
+		this.edit = {
+			/** @type {String} */
+			view: null,
+			/** @type {Boolean} */
+			enableDoubleClick: false,
+			/** @type {Boolean} */
+			enableRowButton: false,
+		};
+
+		this.add = {
 			/** @type {String} */
 			view: null,
 			/** @type {Boolean} */
 			enableToolbar: false,
 			/** @type {Boolean} */
-			enableDoubleClick: false,
-			/** @type {Boolean} */
-			enableRowButton: false,
+			enableFloatingButton: false,
 			/** @type {Boolean} */
 			enableMenu: false,
 		};
@@ -156,5 +174,12 @@ export class ViewActions {
 			/** @type {Boolean} */
 			enableMenu: false,
 		};
+	}
+}
+
+export class ViewOptions {
+	constructor() {
+		/** @type {Boolean} */
+		this.enableMultiSelect = false;
 	}
 }

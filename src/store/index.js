@@ -18,6 +18,7 @@ import { AppInfo } from "../models/AppInfo";
 import { View } from "../models/View";
 // eslint-disable-next-line no-unused-vars
 import { Query } from "../models/Query";
+import Vuetify from "../plugins/vuetify";
 
 Vue.use(Vuex);
 
@@ -155,6 +156,8 @@ const store = new Vuex.Store({
 
 				let metaMenu = await RestApiService.get($api.GET_META_MENU, null, true);
 				context.commit($.mutations.APP_SET_DRAWERITEMS, metaMenu.response);
+
+				Vuetify.framework.lang.current = context.state.app.user ? context.state.app.user.languageCode : "en";
 			} catch (/** @type {Error}*/ ex) {
 				console.error(ex);
 				alert(ex.message);

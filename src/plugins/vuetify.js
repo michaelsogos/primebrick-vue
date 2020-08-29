@@ -2,6 +2,7 @@ import Vue from "vue";
 import Vuetify from "vuetify";
 import "vuetify/dist/vuetify.min.css";
 import colors from "vuetify/es5/util/colors";
+import { en, it, fr, de } from "vuetify/es5/locale";
 
 Vue.use(Vuetify);
 
@@ -22,5 +23,9 @@ export default new Vuetify({
 		options: {
 			customProperties: true,
 		},
+	},
+	lang: {
+		locales: { en, it, fr, de },
+		current: "en",
 	},
 });
