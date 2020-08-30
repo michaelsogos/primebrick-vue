@@ -1,5 +1,10 @@
+/* eslint-disable vue/no-parsing-error */
 <template>
-    <v-container fluid fill-height class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0">
+    <v-container
+        fluid
+        fill-height
+        class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0"
+    >
         <h-panel>
             <template v-slot:header>
                 <v-toolbar
@@ -8,7 +13,11 @@
                     tile
                     :color="`${computeColor(view.color)} lighten-5`"
                     height="46"
-                    :style="`border-bottom: 2px solid ${computeCssColor(view.color)} !important`"
+                    :style="
+                        `border-bottom: 2px solid ${computeCssColor(
+                            view.color
+                        )} !important`
+                    "
                 >
                     <v-btn
                         text
@@ -18,7 +27,7 @@
                         @click="onAddItem()"
                     >
                         <v-icon left>mdi-plus</v-icon>
-                        {{ 'add' | translate}}
+                        {{ "add" | translate }}
                     </v-btn>
                     <v-btn
                         text
@@ -28,7 +37,7 @@
                         @click="onDeleteItems()"
                     >
                         <v-icon left>mdi-delete-alert</v-icon>
-                        {{ 'delete' | translate}}
+                        {{ "delete" | translate }}
                     </v-btn>
                     <v-btn
                         text
@@ -38,7 +47,7 @@
                         @click="onArchiveItems()"
                     >
                         <v-icon left>mdi-trash-can</v-icon>
-                        {{ 'archive' | translate}}
+                        {{ "archive" | translate }}
                     </v-btn>
                     <v-btn
                         text
@@ -48,7 +57,7 @@
                         v-if="checkToolbarButtonVisibility('refresh')"
                     >
                         <v-icon left>mdi-refresh</v-icon>
-                        {{ 'refresh' | translate}}
+                        {{ "refresh" | translate }}
                     </v-btn>
                     <v-spacer></v-spacer>
                     <v-text-field
@@ -62,7 +71,9 @@
                         prepend-inner-icon="mdi-magnify"
                         :label="'search' | translate"
                         color="primary"
-                        :background-color="`${computeColor(view.color)} lighten-4`"
+                        :background-color="
+                            `${computeColor(view.color)} lighten-4`
+                        "
                         type="search"
                         style="max-width:400px"
                         @change="onSearch"
@@ -78,11 +89,13 @@
                         class="pa-0 ma-0"
                     >
                         <v-btn :title="view.definition.type">
-                            <v-icon>{{getViewIcon(view.definition.type)}}</v-icon>
+                            <v-icon>{{
+                                getViewIcon(view.definition.type)
+                            }}</v-icon>
                         </v-btn>
-                        <template v-for="(item) in view.alternativeViews">
+                        <template v-for="item in view.alternativeViews">
                             <v-btn :key="item.type" :title="item.type">
-                                <v-icon>{{getViewIcon(item.type)}}</v-icon>
+                                <v-icon>{{ getViewIcon(item.type) }}</v-icon>
                             </v-btn>
                         </template>
                     </v-btn-toggle>
@@ -103,7 +116,11 @@
                             dense
                             rounded
                             dark
-                            :class="[`${computeColor('primary')}`, 'pa-1', 'ma-0']"
+                            :class="[
+                                `${computeColor('primary')}`,
+                                'pa-1',
+                                'ma-0'
+                            ]"
                         >
                             <v-list-item
                                 v-for="(item, idx) in getMenuLink()"
@@ -111,9 +128,11 @@
                                 @click="onOpenLink(item)"
                             >
                                 <v-list-item-icon>
-                                    <v-icon>{{item.icon}}</v-icon>
+                                    <v-icon>{{ item.icon }}</v-icon>
                                 </v-list-item-icon>
-                                <v-list-item-title>{{ item.labelKey | translate }}</v-list-item-title>
+                                <v-list-item-title>{{
+                                    item.labelKey | translate
+                                }}</v-list-item-title>
                             </v-list-item>
                         </v-list>
                     </v-menu>
@@ -147,9 +166,9 @@
                 class="d-flex flex-column fill-height"
                 :server-items-length="gridTotal"
                 :footer-props="{
-                                showFirstLastPage: true,
-                                itemsPerPageOptions:[50],
-                                }"
+                    showFirstLastPage: true,
+                    itemsPerPageOptions: [50]
+                }"
                 @update:page="onPageChange"
                 @update:sort-by="onSortField"
                 @update:sort-desc="onSortDescendant"
@@ -161,26 +180,69 @@
                 :single-select="!getGridOption('enableMultiSelect')"
                 v-model="viewSelectedRows"
             >
-                <template v-slot:body.prepend="{items, headers}">
-                    <tr class="v-data-table__empty-wrapper" v-if="checkColumnFiltersVisibility()">
-                        <td v-for="(item, idx) in headers" :key="idx" class="pa-0 ma-0">
-                            <v-text-field
-                                v-if="checkFilterFieldVisibility(item,'string')"
-                                hide-details
-                                solo
-                                flat
-                                dense
-                                clearable
-                                type="text"
-                                :label="item.value"
-                                class="filter-input"
-                                :ref="`filter-input-${item.value}`"
-                                @change="onFilterField(item)"
-                            ></v-text-field>
+                <template v-slot:[`body.prepend`]="{ headers }">
+                    <tr
+                        class="v-data-table__empty-wrapper"
+                        v-if="checkColumnFiltersVisibility()"
+                    >
+                        <td
+                            v-for="(item, idx) in headers"
+                            :key="idx"
+                            class="pa-0 ma-0"
+                        >
+                            <template
+                                v-if="
+                                    checkFilterFieldVisibility(item, 'string')
+                                "
+                            >
+                                <v-row no-gutters>
+                                    <v-col cols="2">
+                                        <v-select
+                                            hide-details
+                                            solo
+                                            flat
+                                            dense
+                                            :ref="
+                                                `filter-operator-${item.value}`
+                                            "
+                                            :items="stringFilterOperators"
+                                            value="CONTAINS"
+                                            class="filter-input"
+                                            @change="onFilterField(item)"
+                                        ></v-select>
+                                    </v-col>
+                                    <v-col cols="10">
+                                        <v-text-field
+                                            hide-details
+                                            solo
+                                            flat
+                                            dense
+                                            clearable
+                                            type="text"
+                                            :label="item.value"
+                                            class="filter-input"
+                                            :ref="`filter-input-${item.value}`"
+                                            @change="onFilterField(item)"
+                                        ></v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </template>
                         </td>
                     </tr>
                 </template>
-                <template v-slot:item.actions="{ item }">
+
+                <template
+                    v-for="boolColumn in getBooleanColumns"
+                    v-slot:[`item.${boolColumn}`]="{ item }"
+                >
+                    <v-simple-checkbox
+                        v-model="item[boolColumn]"
+                        disabled
+                        :key="boolColumn"
+                    ></v-simple-checkbox>
+                </template>
+
+                <template v-slot:[`item.actions`]="{ item }">
                     <div class="actionsCell">
                         <v-icon
                             v-if="checkRowButtonVisibility('open')"
@@ -188,28 +250,32 @@
                             class="mr-2"
                             color="primary"
                             @click.stop="onOpenItem(item)"
-                        >mdi-eye</v-icon>
+                            >mdi-eye</v-icon
+                        >
                         <v-icon
                             v-if="checkRowButtonVisibility('edit')"
                             small
                             color="primary"
                             class="mr-2"
                             @click.stop="onEditItem(item)"
-                        >mdi-pencil</v-icon>
+                            >mdi-pencil</v-icon
+                        >
                         <v-icon
                             v-if="checkRowButtonVisibility('delete')"
                             small
                             class="mr-2"
                             color="error"
                             @click="onDeleteItem(item)"
-                        >mdi-delete-alert</v-icon>
+                            >mdi-delete-alert</v-icon
+                        >
                         <v-icon
                             v-if="checkRowButtonVisibility('archive')"
                             small
                             class="mr-2"
                             color="error"
                             @click="onArchiveItem(item)"
-                        >mdi-trash-can</v-icon>
+                            >mdi-trash-can</v-icon
+                        >
                     </div>
                 </template>
             </v-data-table>
@@ -244,7 +310,21 @@ export default {
             viewSelectedRows: [],
             viewSearchTerm: null,
             /** @type {ViewFilterField[]} */
-            viewColumnFilters: []
+            viewColumnFilters: [],
+            stringFilterOperators: [
+                {
+                    text: this.$options.filters.translate("contains"),
+                    value: "CONTAINS"
+                },
+                {
+                    text: this.$options.filters.translate("starts-width"),
+                    value: "STARTSWIDTH"
+                },
+                {
+                    text: this.$options.filters.translate("ends-width"),
+                    value: "ENDSWIDTH"
+                }
+            ]
         };
     },
     computed: {
@@ -264,6 +344,17 @@ export default {
                 return {
                     text: this.$options.filters.translate(item.labelKey),
                     value: item.name,
+                    type: item.type || 'string',
+                    align: (() => {
+                        switch (item.type) {
+                            case "boolean":
+                                return 'center';
+                            case "number":
+                                return 'end';
+                            default:
+                                return 'start';
+                        }
+                    })(),
                     columnFilter: filter
                 };
             });
@@ -287,6 +378,15 @@ export default {
                 });
 
             return headers;
+        },
+        getBooleanColumns() {
+            if (!this.view) return [];
+
+            /** @type {View} */
+            const thisView = this.view;
+
+            return thisView.definition.fields.filter((f) => f.type == 'boolean').map((f) => f.name);
+
         },
         /** @returns {Number} */
         gridTotal() {
@@ -426,11 +526,22 @@ export default {
             this.viewSelectedRows = [];
 
             const filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
+            const filterFieldOperator = this.$refs[`filter-operator-${header.value}`][0].internalValue;
 
             const filterFieldIndex = this.viewColumnFilters.findIndex((f) => f.field == header.columnFilter.field);
             if (filterFieldIndex >= 0)
                 if (filterFieldValue)
-                    this.viewColumnFilters[filterFieldIndex].value == filterFieldValue;
+                    switch (filterFieldOperator) {
+                        case "CONTAINS":
+                            this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}%`;
+                            break;
+                        case "STARTSWIDTH":
+                            this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}%`;
+                            break;
+                        case "ENDSWIDTH":
+                            this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}`;
+                            break;
+                    }
                 else
                     this.viewColumnFilters.splice(filterFieldIndex);
             else {
@@ -438,7 +549,17 @@ export default {
                     const filterField = new ViewFilterField();
                     filterField.field = header.columnFilter.field;
                     filterField.type = header.columnFilter.type;
-                    filterField.value = filterFieldValue;
+                    switch (filterFieldOperator) {
+                        case "CONTAINS":
+                            filterField.value = `%${filterFieldValue}%`;
+                            break;
+                        case "STARTSWIDTH":
+                            filterField.value = `${filterFieldValue}%`;
+                            break;
+                        case "ENDSWIDTH":
+                            filterField.value = `%${filterFieldValue}`;
+                            break;
+                    }
                     this.viewColumnFilters.push(filterField);
                 }
             }
@@ -603,12 +724,13 @@ export default {
                         case "string":
                             {
                                 columnFilter.expressions.push(`$self.${filterField.field} like :${filterField.field}_field_filter`);
-                                columnFilter.expressionValues[`${filterField.field}_field_filter`] = `%${filterField.value}%`;
+
+                                columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
                             }
                             break;
                     }
                 }
-
+                console.log(query);
                 if (columnFilter.expressions.length > 0)
                     query.filters.push(columnFilter);
             }
@@ -652,6 +774,7 @@ export default {
 
 .filter-input {
     border-radius: 0;
+    border-right: thin solid rgba(0, 0, 0, 0.12);
 }
 
 /* .actionsCell {

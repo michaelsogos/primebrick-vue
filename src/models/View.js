@@ -46,6 +46,8 @@ export class ViewField {
 		this.labelKey = null;
 		/** @type {String[]} */
 		this.perms = [];
+		/** @type {String} */
+		this.type = null;
 
 		/** @type {Number} */
 		// this.defaultValue = null;
@@ -63,8 +65,7 @@ export class ViewField {
 		// this.selection = null;
 		/** @type {ViewFieldSelection[]} */
 		// this.selectionList = [];
-		/** @type {String} */
-		// this.type = null;
+
 		/** @type {String} */
 		// this.target = null;
 		/** @type {String} */
@@ -209,7 +210,7 @@ export class ViewFilterField {
 		/** @type {String} */
 		this.type = null;
 		/** @type {String} */
-		this.value = null;		
+		this.value = null;
 	}
 }
 
