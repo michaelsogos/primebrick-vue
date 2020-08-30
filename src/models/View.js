@@ -123,6 +123,8 @@ export class ViewFilter {
 		this.expressionOperator = null;
 		/** @type {String[]} */
 		this.expressions = [];
+		/** @type {any} */
+		this.expressionValues = null;
 	}
 }
 
@@ -150,30 +152,64 @@ export class ViewActions {
 			/** @type {String} */
 			view: null,
 			/** @type {Boolean} */
-			enableToolbar: false,
+			enableToolbarButton: false,
 			/** @type {Boolean} */
 			enableFloatingButton: false,
 			/** @type {Boolean} */
-			enableMenu: false,
+			enableMenuLink: false,
 		};
 
-		this.onDelete = {
+		this.delete = {
 			/** @type {Boolean} */
-			enableToolbar: false,
+			enableToolbarButton: false,
 			/** @type {Boolean} */
 			enableRowButton: false,
 			/** @type {Boolean} */
-			enableMenu: false,
+			enableMenuLink: false,
 		};
 
-		this.onArchive = {
+		this.archive = {
 			/** @type {Boolean} */
-			enableToolbar: false,
+			enableToolbarButton: false,
 			/** @type {Boolean} */
 			enableRowButton: false,
 			/** @type {Boolean} */
-			enableMenu: false,
+			enableMenuLink: false,
 		};
+
+		this.refresh = {
+			/** @type {Boolean} */
+			enableToolbarButton: false,
+			/** @type {Boolean} */
+			enableMenuLink: false,
+		};
+
+		this.search = {
+			/** @type {Boolean} */
+			enableToolbarButton: false,
+			/** @type {String[]} */
+			fields: [],
+		};
+
+		this.filter = {
+			/** @type {Boolean} */
+			enableColumns: false,
+			/** @type {Boolean} */
+			enableDialog: false,
+			/** @type {ViewFilterField[]} */
+			fields: [],
+		};
+	}
+}
+
+export class ViewFilterField {
+	constructor() {
+		/** @type {String} */
+		this.field = null;
+		/** @type {String} */
+		this.type = null;
+		/** @type {String} */
+		this.value = null;		
 	}
 }
 
