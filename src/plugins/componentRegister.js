@@ -16,6 +16,9 @@ Vue.component(UINavTree.name, UINavTree);
 import UIPanel from "../components/ui/Panel.vue";
 Vue.component(UIPanel.name, UIPanel);
 
+import UIViewToolbar from "../components/ui/ViewToolbar.vue";
+Vue.component(UIViewToolbar.name, UIViewToolbar);
+
 //* Register Views *//
 //--------------------------//
 import ViewCards from "../components/views/ViewCards.vue";

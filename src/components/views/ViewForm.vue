@@ -1,93 +1,161 @@
 <template>
-    <v-container fluid fill-height class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0">
+    <v-container
+        fluid
+        fill-height
+        class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0 blue-grey lighten-4"
+    >
         <h-panel>
             <template v-slot:header>
-                <v-toolbar
-                    dense
-                    flat
-                    tile
-                    color="grey lighten-2"
-                    height="36"
-                    style="border-bottom: 12px solid #ff0000"
-                >
-                    <v-btn text tile class="caption primary--text">
-                        <v-icon small left>fa-plus</v-icon>add
-                    </v-btn>
-                    <v-btn text tile class="caption error--text">
-                        <v-icon small left>fa-trash</v-icon>delete
-                    </v-btn>
-
-                    <v-spacer></v-spacer>
-                </v-toolbar>
+                <h-view-toolbar
+                    :view="view"
+                    @delete-items="onDeleteItem"
+                    @archive-items="onArchiveItem"
+                    @refresh="onRefresh"
+                ></h-view-toolbar>
+                <v-btn @click="test">test</v-btn>
             </template>
             <template v-slot:footer>
                 <div></div>
             </template>
-            <v-sheet v-for="item in getViewFormPanels" :key="item.name">
-                <span>{{item.name}}</span>
-            </v-sheet>
+            <v-form v-if="viewData">
+                <v-row no-gutters>
+                    <template v-for="(item, index) in getContainers">
+                        <v-col
+                            cols="12"
+                            :lg="item.cols || 12"
+                            :key="index"
+                            :class="[
+                                'px-2',
+                                'mt-2',
+                                index != getContainers.length - 1
+                                    ? 'mb-2'
+                                    : 'mb-0'
+                            ]"
+                        >
+                            <v-card class="pa-4">
+                                <v-row>
+                                    <template
+                                        v-for="(field, index) in item.fields"
+                                    >
+                                        <v-col
+                                            :cols="field.cols || 12"
+                                            :key="index"
+                                        >
+                                            <v-checkbox
+                                                dense
+                                                :label="
+                                                    field.labelKey | translate
+                                                "
+                                                v-model="viewData[field.name]"
+                                                v-if="
+                                                    field.type &&
+                                                        field.type == 'checkbox'
+                                                "
+                                            >
+                                            </v-checkbox>
+
+                                            <v-switch
+                                                dense
+                                                :label="
+                                                    field.labelKey | translate
+                                                "
+                                                v-model="viewData[field.name]"
+                                                v-else-if="
+                                                    field.type &&
+                                                        field.type == 'switch'
+                                                "
+                                            >
+                                            </v-switch>
+
+                                            <v-text-field
+                                                outlined
+                                                dense
+                                                :label="
+                                                    field.labelKey | translate
+                                                "
+                                                v-model="viewData[field.name]"
+                                                v-else
+                                            >
+                                            </v-text-field>
+                                        </v-col>
+                                    </template>
+                                </v-row>
+                            </v-card>
+                        </v-col>
+                    </template>
+                </v-row>
+            </v-form>
         </h-panel>
     </v-container>
 </template>
 
 <script>
 import $ from "../../store/types";
-import { ViewContext } from '../../models/ViewContext';
+import { Query } from 'src/models/Query';
 // eslint-disable-next-line no-unused-vars
-import { ViewFormDefinition, ViewFormPanel } from "../../models/ViewFormDefinition";
-// eslint-disable-next-line no-unused-vars
-import { FetchResult } from "../../models/FetchResult";
-// eslint-disable-next-line no-unused-vars
-import { ViewType } from '../../models/ViewContext';
+import { View, ViewFilter, ViewFormDefinition, ViewContainer } from 'src/models/View';
 
 export default {
     name: "view-form",
     props: {
-        viewContext: ViewContext,
-    }, data: function () {
+        view: Object
+    },
+    data: function () {
         return {
-            /** @type {ViewFormDefinition} */
-            viewDefinition: null,
-            viewDataLoading: false,
-            /** @type {FetchResult} */
-            viewData: null,
-            /** @type {ViewType} */
-            viewType: null,
+            viewData: null
         };
     },
     computed: {
-        /** @returns {ViewFormPanel[]} */
-        getViewFormPanels() {
-            console.log(this.viewDefinition);
-            return this.viewDefinition ? this.viewDefinition.view.items[0].view.items : [];
+        /** @returns {ViewContainer[]} */
+        getContainers() {
+            if (!this.view) return [];
+
+            /** @type {View} */
+            const thisView = this.view;
+            return thisView.definition.containers;
         }
     },
     methods: {
-        async loadViewDefinition() {
-            this.viewDefinition = await this.$store.getters[$.getters.APP_GET_VIEWDEFINITION](this.viewContext.context, this.viewType, this.viewContext.model);
-            console.log(this.viewDefinition.view.items[0]);
-            console.log(this.viewDefinition.view.items[0].view.items);
+        test() {
+            console.log(Object.assign({}, this.viewData));
+        },
+        onDeleteItem() {
+            alert(this.view.entityId);
+        },
+        onArchiveItem() {
+            alert(this.view.entityId);
+        },
+        onRefresh() {
+            this.loadData();
         },
         async loadData() {
-            this.viewDataLoading = true;
-            let dataFields = this.viewDefinition.fields.map(item => { return item.name; });
-            this.viewData = await this.$store.getters[$.getters.APP_GET_RECORD](this.viewContext.model, dataFields, this.viewContext.context._id);
-            this.viewDataLoading = false;
-        }
+            /** @type {View} */
+            const thisView = this.view;
+
+            if (!thisView.entityId)
+                this.viewData = {};
+            else {
+
+                const query = new Query();
+                query.entity = thisView.definition.entity;
+
+                const searchFilter = new ViewFilter();
+                searchFilter.expressionValues = {};
+                searchFilter.expressionValues["id"] = thisView.entityId;
+                searchFilter.expressions.push(`$self.id = :id`);
+                query.filters.push(searchFilter);
+
+                this.viewData = await this.$store.getters[$.getters.APP_GET_RECORD](query);
+            }
+        },
     },
     mounted() {
-        let self = this;
-        let viewTypeIndex = this.viewContext.views.findIndex((item) => item.type == this.viewContext.viewType);
-        this.viewType = this.viewContext.views[viewTypeIndex];
-        this.loadViewDefinition().then(() => {
-            self.loadData().catch(ex => {
-                console.error(ex);
-                alert(ex.message);
-            });
-        }).catch(ex => {
+        this.loadData().catch(ex => {
             console.error(ex);
             alert(ex.message);
         });
     }
 }
 </script>
+
+     

@@ -6,6 +6,7 @@ const apiEndPoints = {
 	GET_META_TRANSLATIONS: "api/meta/translations",
 	GET_META_VIEW: "api/meta/view",
 	POST_GET_DATA: "api/data/find",
+	POST_GET_ENTITY: "api/data/findOne",
 };
 
 export default apiEndPoints;

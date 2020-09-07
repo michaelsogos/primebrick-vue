@@ -19,6 +19,10 @@ import { View } from "../models/View";
 // eslint-disable-next-line no-unused-vars
 import { Query } from "../models/Query";
 import Vuetify from "../plugins/vuetify";
+// eslint-disable-next-line no-unused-vars
+import { QueryResult } from "../models/QueryResult";
+// eslint-disable-next-line no-unused-vars
+import { OpenView } from "../models/OpenView";
 
 Vue.use(Vuex);
 
@@ -186,18 +190,20 @@ const store = new Vuex.Store({
 		/**
 		 *
 		 * @param {ActionContext<initialState>} context
-		 * @param {MenuItem} menuItem
+		 * @param {OpenView} openView
 		 */
-		async [$.actions.APP_OPEN_VIEW](context, menuItem) {
+		async [$.actions.APP_OPEN_VIEW](context, openView) {
+			//TODO: @michaelsogos -> instead of menuitem we must receive viewName and its context nullable
 			let result = await RestApiService.get($api.GET_META_VIEW, {
-				viewName: menuItem.viewName,
+				viewName: openView.viewName,
 			});
 
 			if (!result.hasError) {
 				/** @type {View} */
 				let view = result.response;
-				if (!view.icon) view.icon = menuItem.icon;
-				if (!view.color) view.color = menuItem.color;
+				view.entityId = openView.entityId;
+				if (!view.icon) view.icon = openView.icon;
+				if (!view.color) view.color = openView.color;
 				context.commit($.mutations.APP_ADD_VIEWTAB, view);
 			} else {
 				console.error(result.exception);
@@ -219,12 +225,9 @@ const store = new Vuex.Store({
 			/**
 			 *
 			 * @param {Query} query
-			 * @param {Number} limit
-			 * @param {Number} offset
-			 * @param {any} sortBy
-			 * @returns
+			 * @returns {QueryResult}
 			 */
-			async (query, limit, offset) => {
+			async (query) => {
 				let result = await RestApiService.post($api.POST_GET_DATA, query);
 
 				if (!result.hasError) {
@@ -234,19 +237,22 @@ const store = new Vuex.Store({
 					alert(result.clientMessage);
 				}
 			},
-		[$.getters.APP_GET_RECORD]: (state) => async (model, fields, recordId) => {
-			let result = await RestApiService.post(`${$api.POST_REST}${model}/${recordId}/fetch`, {
-				fields: fields,
-				related: {},
-			});
+		[$.getters.APP_GET_RECORD]: (state) =>
+			/**
+			 *
+			 * @param {Query} query
+			 * @returns {Object}
+			 */
+			async (query) => {
+				let result = await RestApiService.post($api.POST_GET_ENTITY, query);
 
-			if (!result.hasError) {
-				return result.response;
-			} else {
-				console.error(result.exception);
-				alert(result.clientMessage);
-			}
-		},
+				if (!result.hasError) {
+					return result.response.data.length == 1 ? result.response.data[0] : null;
+				} else {
+					console.error(result.exception);
+					alert(result.clientMessage);
+				}
+			},
 		[$.getters.APP_GET_TRANSLATION]: (state) => (key) => {
 			let translation = state.app.translations.find((item) => {
 				return item.key === key;

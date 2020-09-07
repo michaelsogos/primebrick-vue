@@ -6,12 +6,16 @@
                 expand-on-hover
                 mini-variant
                 fixed
+                permanent
                 clipped
                 color="primary"
                 dark
                 v-if="$store.state.app.isAuthenticated"
             >
-                <h-nav-tree :items="$store.state.app.drawerItems" ref="navTree"></h-nav-tree>
+                <h-nav-tree
+                    :items="$store.state.app.drawerItems"
+                    ref="navTree"
+                ></h-nav-tree>
             </v-navigation-drawer>
         </div>
 
@@ -21,24 +25,38 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
 
-            <v-menu bottom offset-y min-width="200" v-if="$store.state.app.isAuthenticated">
+            <v-menu
+                bottom
+                offset-y
+                min-width="200"
+                v-if="$store.state.app.isAuthenticated"
+            >
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
-                        <v-avatar :color="$store.state.app.user.color || 'tertiary'" size="36">
+                        <v-avatar
+                            :color="$store.state.app.user.color || 'tertiary'"
+                            size="36"
+                        >
                             <img
                                 v-if="$store.state.app.user.image"
                                 :src="$store.state.app.user.image"
                                 :alt="getUserFullname"
                             />
-                            <span v-else class="white--text h4">{{getUserInitials}}</span>
+                            <span v-else class="white--text h4">{{
+                                getUserInitials
+                            }}</span>
                         </v-avatar>
                     </v-btn>
                 </template>
                 <v-list nav>
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title class="title">{{getUserFullname}}</v-list-item-title>
-                            <v-list-item-subtitle>{{$store.state.app.user.email}}</v-list-item-subtitle>
+                            <v-list-item-title class="title">{{
+                                getUserFullname
+                            }}</v-list-item-title>
+                            <v-list-item-subtitle>{{
+                                $store.state.app.user.email
+                            }}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
                     <v-divider></v-divider>
@@ -98,5 +116,9 @@ export default {
 .content-not-scrollable {
     height: 100vh;
     overflow: hidden;
+}
+
+body::-webkit-scrollbar {
+    display: none;
 }
 </style>

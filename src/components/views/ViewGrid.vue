@@ -7,142 +7,19 @@
     >
         <h-panel>
             <template v-slot:header>
-                <v-toolbar
-                    dense
-                    flat
-                    tile
-                    :color="`${computeColor(view.color)} lighten-5`"
-                    height="46"
-                    :style="
-                        `border-bottom: 2px solid ${computeCssColor(
-                            view.color
-                        )} !important`
-                    "
-                >
-                    <v-btn
-                        text
-                        tile
-                        class="caption primary--text"
-                        v-if="checkToolbarButtonVisibility('add')"
-                        @click="onAddItem()"
-                    >
-                        <v-icon left>mdi-plus</v-icon>
-                        {{ "add" | translate }}
-                    </v-btn>
-                    <v-btn
-                        text
-                        tile
-                        class="caption error--text"
-                        v-if="checkToolbarButtonVisibility('delete')"
-                        @click="onDeleteItems()"
-                    >
-                        <v-icon left>mdi-delete-alert</v-icon>
-                        {{ "delete" | translate }}
-                    </v-btn>
-                    <v-btn
-                        text
-                        tile
-                        class="caption error--text"
-                        v-if="checkToolbarButtonVisibility('archive')"
-                        @click="onArchiveItems()"
-                    >
-                        <v-icon left>mdi-trash-can</v-icon>
-                        {{ "archive" | translate }}
-                    </v-btn>
-                    <v-btn
-                        text
-                        tile
-                        class="caption primary--text"
-                        @click="onRefresh"
-                        v-if="checkToolbarButtonVisibility('refresh')"
-                    >
-                        <v-icon left>mdi-refresh</v-icon>
-                        {{ "refresh" | translate }}
-                    </v-btn>
-                    <v-spacer></v-spacer>
-                    <v-text-field
-                        solo
-                        single-line
-                        flat
-                        dense
-                        clearable
-                        @click.stop
-                        hide-details
-                        prepend-inner-icon="mdi-magnify"
-                        :label="'search' | translate"
-                        color="primary"
-                        :background-color="
-                            `${computeColor(view.color)} lighten-4`
-                        "
-                        type="search"
-                        style="max-width:400px"
-                        @change="onSearch"
-                        v-model="viewSearchTerm"
-                        v-if="checkToolbarButtonVisibility('search')"
-                    ></v-text-field>
-                    <v-btn-toggle
-                        v-if="view.alternativeViews.length > 0"
-                        :value="0"
-                        background-color="transparent"
-                        group
-                        :color="computeColor(view.color)"
-                        class="pa-0 ma-0"
-                    >
-                        <v-btn :title="view.definition.type">
-                            <v-icon>{{
-                                getViewIcon(view.definition.type)
-                            }}</v-icon>
-                        </v-btn>
-                        <template v-for="item in view.alternativeViews">
-                            <v-btn :key="item.type" :title="item.type">
-                                <v-icon>{{ getViewIcon(item.type) }}</v-icon>
-                            </v-btn>
-                        </template>
-                    </v-btn-toggle>
-                    <v-menu offset-y tile>
-                        <template v-slot:activator="{ on }">
-                            <v-btn
-                                icon
-                                color="primary"
-                                small
-                                v-on="on"
-                                v-if="checkMenuVisibility()"
-                            >
-                                <v-icon>mdi-dots-vertical</v-icon>
-                            </v-btn>
-                        </template>
-
-                        <v-list
-                            dense
-                            rounded
-                            dark
-                            :class="[
-                                `${computeColor('primary')}`,
-                                'pa-1',
-                                'ma-0'
-                            ]"
-                        >
-                            <v-list-item
-                                v-for="(item, idx) in getMenuLink()"
-                                :key="idx"
-                                @click="onOpenLink(item)"
-                            >
-                                <v-list-item-icon>
-                                    <v-icon>{{ item.icon }}</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>{{
-                                    item.labelKey | translate
-                                }}</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-menu>
-                </v-toolbar>
+                <h-view-toolbar
+                    :view="view"
+                    @delete-items="onDeleteItems"
+                    @archive-items="onArchiveItems"
+                    @refresh="onRefresh"
+                    @search="onSearch"
+                ></h-view-toolbar>
             </template>
             <template v-slot:footer>
                 <div></div>
             </template>
             <v-btn
-                :color="computeColor(view.color)"
+                :color="view.color || 'tertiary'"
                 fab
                 absolute
                 dark
@@ -223,7 +100,81 @@
                                             class="filter-input"
                                             :ref="`filter-input-${item.value}`"
                                             @change="onFilterField(item)"
-                                        ></v-text-field>
+                                        >
+                                            <template v-slot:prepend-inner>
+                                                <v-icon small
+                                                    >mdi-filter</v-icon
+                                                >
+                                            </template>
+                                        </v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </template>
+                            <template
+                                v-if="checkFilterFieldVisibility(item, 'list')"
+                            >
+                                <v-row no-gutters>
+                                    <v-col>
+                                        <v-select
+                                            hide-details
+                                            solo
+                                            flat
+                                            dense
+                                            :ref="`filter-input-${item.value}`"
+                                            :items="[
+                                                'df',
+                                                'dss',
+                                                'sfdfsf',
+                                                'ddghh'
+                                            ]"
+                                            value="df"
+                                            class="filter-input"
+                                            clearable
+                                            @change="onFilterField(item)"
+                                        >
+                                            <template v-slot:prepend-inner>
+                                                <v-icon small
+                                                    >mdi-filter</v-icon
+                                                >
+                                            </template>
+                                        </v-select>
+                                    </v-col>
+                                </v-row>
+                            </template>
+                            <template
+                                v-if="
+                                    checkFilterFieldVisibility(item, 'search')
+                                "
+                            >
+                                <v-row no-gutters>
+                                    <v-col>
+                                        <!-- TODO: @michaelsogos -> Implement remote query -->
+                                        <v-autocomplete
+                                            hide-details
+                                            solo
+                                            flat
+                                            dense
+                                            :ref="`filter-input-${item.value}`"
+                                            class="filter-input"
+                                            :items="[
+                                                'df',
+                                                'dss',
+                                                'sfdfsf',
+                                                'ddghh',
+                                                'it'
+                                            ]"
+                                            hide-selected
+                                            label="Public APIs"
+                                            @change="onFilterField(item)"
+                                            return-object
+                                            clearable
+                                        >
+                                            <template v-slot:prepend-inner>
+                                                <v-icon small
+                                                    >mdi-filter</v-icon
+                                                >
+                                            </template>
+                                        </v-autocomplete>
                                     </v-col>
                                 </v-row>
                             </template>
@@ -286,13 +237,12 @@
 <script>
 import $ from "../../store/types";
 // eslint-disable-next-line no-unused-vars
-import { ViewGridDefinition } from "../../models/ViewGridDefinition";
-// eslint-disable-next-line no-unused-vars
 import { QueryResult } from "../../models/QueryResult";
-// import { LowLevelUtils } from "../../common/LowLevelUtils";
+import { LowLevelUtils } from "../../common/LowLevelUtils";
 // eslint-disable-next-line no-unused-vars
-import { View, ViewNameType, ViewSort, ViewActions, ViewFilter, ViewFilterField } from 'src/models/View';
+import { View, ViewSort, ViewFilter, ViewFilterField } from 'src/models/View';
 import { Query } from 'src/models/Query';
+import { OpenView } from 'src/models/OpenView';
 
 export default {
     name: "view-grid",
@@ -396,51 +346,57 @@ export default {
         /** @returns {[]} */
         gridRecords() {
             if (!this.viewData || !this.viewData.data || this.viewData.data.length <= 0) return [];
-            return this.viewData.data;
 
-            // let expressionEvaluators = [];
-            // for (let hilite of this.viewDefinition.view.hilites) {
-            //     let evaluator = {
-            //         eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], hilite.condition),
-            //         cssClasses: []
-            //     };
+            /** @type {View} */
+            const thisView = this.view;
 
-            //     if (hilite.background) evaluator.cssClasses.push(...[LowLevelUtils.cssClassNameSanitizer(hilite.background), "lighten-4"]);
-            //     if (hilite.color) evaluator.cssClasses.push(`${hilite.color}--text`);
+            let expressionEvaluators = [];
+            for (let highlight of thisView.highlighters) {
+                let evaluator = {
+                    eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], highlight.expression),
+                    cssClasses: []
+                };
 
-            //     expressionEvaluators.push(evaluator);
-            // }
+                if (highlight.backgroundColor) evaluator.cssClasses.push(...highlight.backgroundColor.split(" "));
+                if (highlight.fontColor) evaluator.cssClasses.push(`${highlight.fontColor}--text`);
+                if (highlight.fontWeight) evaluator.cssClasses.push(`font-weight-${highlight.fontWeight}`);
+                if (highlight.fontStyle) evaluator.cssClasses.push(`text-decoration-${highlight.fontStyle}`);
+                if (highlight.fontItalic) evaluator.cssClasses.push("font-italic");
 
-            // let records = [];
-            // for (let item of this.viewData.data) {
-            //     let record = {
-            //         id: item.id
-            //     };
+                expressionEvaluators.push(evaluator);
+            }
 
-            //     for (let field of this.view.definition.fields) {
-            //         if (!Object.prototype.hasOwnProperty.call(item, field.name))
-            //             record[field.name] = null;
-            //         else if (field.targetName) {
-            //             record[`__${field.name}`] = item[field.name];
-            //             record[field.name] = item[field.name] != null ? item[field.name][field.targetName] : null;
-            //         } else if (field.selectionList && field.selectionList.length > 0) {
-            //             record[`__${field.name}`] = item[field.name];
-            //             let label = field.selectionList.find(l => l.value == item[field.name]).title;
-            //             record[field.name] = item[field.name] != null ? label : null;
-            //         }
-            //         else
-            //             record[field.name] = item[field.name];
-            //     }
+            let records = [];
+            for (let item of this.viewData.data) {
+                let record = {
+                    id: item.id
+                };
 
-            //     for (let evaluator of expressionEvaluators) {
-            //         if (evaluator.eval(item))
-            //             record.__cssClasses = evaluator.cssClasses;
-            //     }
+                for (let field of thisView.definition.fields) {
+                    if (!Object.prototype.hasOwnProperty.call(item, field.name))
+                        record[field.name] = null;
+                    // else if (field.targetName) {
+                    //     record[`__${field.name}`] = item[field.name];
+                    //     record[field.name] = item[field.name] != null ? item[field.name][field.targetName] : null;
+                    // } else if (field.selectionList && field.selectionList.length > 0) {
+                    //     record[`__${field.name}`] = item[field.name];
+                    //     let label = field.selectionList.find(l => l.value == item[field.name]).title;
+                    //     record[field.name] = item[field.name] != null ? label : null;
+                    // }
+                    else
+                        record[field.name] = item[field.name];
+                }
 
-            //     records.push(record);
-            // }
+                for (let evaluator of expressionEvaluators) {
+                    if (evaluator.eval(item))
+                        record.__cssClasses = evaluator.cssClasses;
+                }
 
-            // return records;
+                records.push(record);
+            }
+
+            return records;
+            // return this.viewData.data;
         },
     },
     methods: {
@@ -466,19 +422,24 @@ export default {
             this.loadData();
         },
         onOpenItem(item) {
-            alert(item.id);
+            /** @type {View} */
+            const thisView = this.view;
+            const context = item || this.viewSelectedRows[0];
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.open.view, context.id));
+
         },
         onEditItem(item) {
-            let formViewContext = Object.assign({}, this.viewContext);
-            formViewContext.viewType = "form";
-            formViewContext.context._id = item.id;
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, formViewContext);
+            /** @type {View} */
+            const thisView = this.view;
+            const context = item || this.viewSelectedRows[0];
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.edit.view, context.id));
+
         },
         onAddItem() {
             /** @type {View} */
             const thisView = this.view;
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.add.view, null));
 
-            alert(thisView.actions.add.view);
         },
         onDeleteItem(item) {
             alert(item.id);
@@ -513,56 +474,57 @@ export default {
             if (thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].view)
                 alert(thisView.actions[actionName].view);
         },
-        onOpenLink(/** @type {{ labelKey: String, view: String, action: String, icon: String }} */link) {
-            alert(link.action);
-        },
-        onSearch() {
+        onSearch(/** @type {String} */ searchTerm) {
             this.viewDataPageNumber = 1;
             this.viewSelectedRows = [];
+            this.viewSearchTerm = searchTerm;
             this.loadData();
         },
         onFilterField(header) {
             this.viewDataPageNumber = 1;
             this.viewSelectedRows = [];
 
-            const filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
-            const filterFieldOperator = this.$refs[`filter-operator-${header.value}`][0].internalValue;
+            let filterFieldValue = null;
+            let filterFieldOperator = null;
 
-            const filterFieldIndex = this.viewColumnFilters.findIndex((f) => f.field == header.columnFilter.field);
-            if (filterFieldIndex >= 0)
-                if (filterFieldValue)
-                    switch (filterFieldOperator) {
-                        case "CONTAINS":
-                            this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}%`;
-                            break;
-                        case "STARTSWIDTH":
-                            this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}%`;
-                            break;
-                        case "ENDSWIDTH":
-                            this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}`;
-                            break;
-                    }
-                else
-                    this.viewColumnFilters.splice(filterFieldIndex);
-            else {
-                if (filterFieldValue) {
-                    const filterField = new ViewFilterField();
-                    filterField.field = header.columnFilter.field;
-                    filterField.type = header.columnFilter.type;
-                    switch (filterFieldOperator) {
-                        case "CONTAINS":
-                            filterField.value = `%${filterFieldValue}%`;
-                            break;
-                        case "STARTSWIDTH":
-                            filterField.value = `${filterFieldValue}%`;
-                            break;
-                        case "ENDSWIDTH":
-                            filterField.value = `%${filterFieldValue}`;
-                            break;
-                    }
-                    this.viewColumnFilters.push(filterField);
-                }
+            if (header.columnFilter.type == "string") {
+                filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
+                filterFieldOperator = this.$refs[`filter-operator-${header.value}`][0].internalValue;
+            } else if (header.columnFilter.type == "list" || header.columnFilter.type == "search") {
+                filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
+                filterFieldOperator = "EQUALS";
             }
+
+            let filterFieldIndex = this.viewColumnFilters.findIndex((f) => f.field == header.columnFilter.field);
+            if (filterFieldIndex < 0) {
+                const filterField = new ViewFilterField();
+                filterField.field = header.columnFilter.field;
+                filterField.type = header.columnFilter.type;
+                filterFieldIndex = this.viewColumnFilters.push(filterField) - 1;
+            }
+
+            if (filterFieldValue)
+                switch (filterFieldOperator) {
+                    case "CONTAINS":
+                        this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}%`;
+                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        break;
+                    case "STARTSWIDTH":
+                        this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}%`;
+                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        break;
+                    case "ENDSWIDTH":
+                        this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}`;
+                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        break;
+                    case "EQUALS":
+                        this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}`;
+                        this.viewColumnFilters[filterFieldIndex].operator = '=';
+                        break;
+                }
+            else
+                this.viewColumnFilters.splice(filterFieldIndex);
+
 
             this.loadData();
         },
@@ -572,29 +534,6 @@ export default {
             const thisView = this.view;
 
             return thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableRowButton == true;
-        },
-        /** @returns {Boolean} */
-        checkToolbarButtonVisibility(/** @type {string} */ actionName) {
-            /** @type {View} */
-            const thisView = this.view;
-
-            return thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableToolbarButton == true;
-        },
-        /** @returns {Boolean} */
-        checkMenuVisibility() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            let showMenu = false;
-            for (const action in thisView.actions) {
-                if (thisView.actions[action].enableMenuLink == true) {
-                    showMenu = true;
-                    break;
-                }
-
-            }
-
-            return showMenu;
         },
         checkColumnFiltersVisibility() {
             /** @type {View} */
@@ -624,49 +563,7 @@ export default {
             }
             else return false;
         },
-        /** @returns {{ labelKey: String, view: String, action: String, icon: String }[]} */
-        getMenuLink() {
-            /** @type {View} */
-            const thisView = this.view;
 
-            const links = [];
-            for (const action in thisView.actions) {
-                if (thisView.actions[action].enableMenuLink == true) {
-                    links.push({ labelKey: action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
-                }
-            }
-
-            return links;
-        },
-        getViewIcon(/** @type {string} */ viewType) {
-            switch (viewType) {
-                case "cards":
-                    return 'mdi-card-text';
-                case "grid":
-                    return "mdi-table-large";
-                case "form":
-                    return "mdi-form-textbox";
-                case "calendar":
-                    return "mdi-calendar-month";
-                default:
-                    return "mdi-view-compact";
-            }
-        },
-        getActionIcon(/** @type {string} */ actionName) {
-            switch (actionName) {
-                case "add":
-                    return 'mdi-plus';
-                case "delete":
-                    return 'mdi-delete-alert';
-                case "archive":
-                    return 'mdi-trash-can';
-                case "refresh":
-                    return 'mdi-refresh';
-                default:
-                    return "";
-            }
-        },
-        // eslint-disable-next-line no-unused-vars
         rowStyle(item) {
             let cssClasses = ["bordered-cell", "alternate-row"];
             if (item.__cssClasses)
@@ -720,15 +617,8 @@ export default {
                 columnFilter.expressionValues = {};
 
                 for (const filterField of this.viewColumnFilters) {
-                    switch (filterField.type) {
-                        case "string":
-                            {
-                                columnFilter.expressions.push(`$self.${filterField.field} like :${filterField.field}_field_filter`);
-
-                                columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
-                            }
-                            break;
-                    }
+                    columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
+                    columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
                 }
                 console.log(query);
                 if (columnFilter.expressions.length > 0)
@@ -738,20 +628,6 @@ export default {
             this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
             this.viewDataLoading = false;
         },
-        computeCssColor(/** @type {String} */ color) {
-            if (!color)
-                return 'var(--v-tertiary-base)';
-            else if (color == 'primary' || color == 'secondary' || color == 'tertiary')
-                return `var(--v-${color}-base)`;
-            else
-                return color;
-        },
-        computeColor(/** @type {String} */ color) {
-            if (!color)
-                return 'tertiary';
-            else
-                return color;
-        }
     },
     mounted() {
         this.loadData().catch(ex => {

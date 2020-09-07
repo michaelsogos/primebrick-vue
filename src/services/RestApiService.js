@@ -31,7 +31,7 @@ export class RestApiService {
 					headers: headers,
 				})
 				.catch((err) => {
-					if (err.response.status >= 400) {
+					if (err.response && err.response.status >= 400) {
 						err.message = err.response.data.message;
 						throw err;
 					}
@@ -70,7 +70,7 @@ export class RestApiService {
 
 		try {
 			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers }).catch((err) => {
-				if (err.response.status >= 400) {
+				if (err.response && err.response.status >= 400) {
 					err.message = err.response.data.message;
 					throw err;
 				}

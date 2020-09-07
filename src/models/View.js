@@ -1,5 +1,7 @@
 export class View {
 	constructor() {
+		/** @type {Number} */
+		this.entityId = null;
 		/** @type {String} */
 		this.name = null;
 		/** @type {String} */
@@ -8,7 +10,7 @@ export class View {
 		this.icon = null;
 		/** @type {String} */
 		this.color = null;
-		/** @type {ViewDefinition} */
+		/** @type {ViewGridDefinition | ViewFormDefinition} */
 		this.definition = null;
 		/** @type {ViewNameType[]} */
 		this.alternativeViews = [];
@@ -16,6 +18,8 @@ export class View {
 		this.actions = null;
 		/** @type {ViewOptions} */
 		this.options = null;
+		/** @type {ViewHighlighters[]} */
+		this.highlighters = [];
 	}
 }
 
@@ -23,18 +27,41 @@ export class ViewDefinition {
 	constructor() {
 		/** @type {String} */
 		this.entity = null;
-		/** @type {Number} */
-		this.entityId = null; //TODO: @michaelsogos -> Move to context
 		/** @type {String} */
-		this.type = null;
-		/** @type {ViewField[]} */
-		this.fields = [];
-		/** @type {ViewSort[]} */
-		this.sorts = [];
+		this.type = "form";
 		/** @type {String[]} */
 		this.perms = [];
+	}
+}
+
+export class ViewFormDefinition extends ViewDefinition {
+	constructor() {
+		super();
+		/** @type {ViewContainer[]} */
+		this.containers = [];
+	}
+}
+
+export class ViewGridDefinition extends ViewDefinition {
+	constructor() {
+		super();
+		/** @type {ViewField[]} */
+		this.fields = [];
 		/** @type {ViewFilter[]} */
 		this.filters = [];
+		/** @type {ViewSort[]} */
+		this.sorts = [];
+	}
+}
+
+export class ViewContainer {
+	constructor() {
+		/** @type {Number} */
+		this.cols = null;
+		/** @type {String} */
+		this.showTitle = null;
+		/** @type {ViewContainerField[]} */
+		this.fields = [];
 	}
 }
 
@@ -48,37 +75,25 @@ export class ViewField {
 		this.perms = [];
 		/** @type {String} */
 		this.type = null;
-
-		/** @type {Number} */
-		// this.defaultValue = null;
-		/** @type {Boolean} */
-		// this.nameColumn = false;
-		/** @type {Boolean} */
-		// this.orphan = false;
-		/** @type {Boolean} */
-		// this.virtual = false;
-		/** @type {Boolean} */
-		// this.readonly = false;
-		/** @type {Boolean} */
-		// this.required = false;
-		/** @type {String} */
-		// this.selection = null;
-		/** @type {ViewFieldSelection[]} */
-		// this.selectionList = [];
-
-		/** @type {String} */
-		// this.target = null;
-		/** @type {String} */
-		// this.targetName = null;
-		/** @type {String[]} */
-		// this.targetSearch = [];
-		/** @type {Boolean} */
-		// this.transient = false;
-		/** @type {String} */
-		// this.mappedBy = null;
-		/** @type {String} */
-		// this.enumType = null;
 	}
+}
+
+export class ViewContainerField extends ViewField {
+	constructor() {
+		super();
+		/** @type {Number} */
+		this.cols = null;
+		/** @type {Boolean} */
+		this.require = false;
+		/** @type {ViewValidation[]} */
+		this.validation = [];
+		/** @type {Boolean} */
+		this.translatable = false;
+	}
+}
+
+export class ViewValidation {
+	constructor() {}
 }
 
 export class ViewFieldSelection {
@@ -211,6 +226,8 @@ export class ViewFilterField {
 		this.type = null;
 		/** @type {String} */
 		this.value = null;
+		/** @type {String} */
+		this.operator = null;
 	}
 }
 
@@ -218,5 +235,22 @@ export class ViewOptions {
 	constructor() {
 		/** @type {Boolean} */
 		this.enableMultiSelect = false;
+	}
+}
+
+export class ViewHighlighters {
+	constructor() {
+		/** @type {String} */
+		this.expression = null;
+		/** @type {String} */
+		this.backgroundColor = null;
+		/** @type {String} */
+		this.fontColor = null;
+		/** @type {String} */
+		this.fontWeight = null;
+		/** @type {String} */
+		this.fontStyle = null;
+		/** @type {Boolean} */
+		this.fontItalic = false;
 	}
 }

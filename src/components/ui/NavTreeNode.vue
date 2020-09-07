@@ -1,14 +1,23 @@
 <template>
     <div>
-        <v-list-item @click="onClickItem" :input-value="expand" class="my-0" :style="nodeStyle()">
+        <v-list-item
+            @click="onClickItem"
+            :input-value="expand"
+            class="my-0"
+            :style="nodeStyle()"
+        >
             <v-list-item-icon>
-                <v-icon dark :small="isSubTree()">{{nodeItem.icon}}</v-icon>
+                <v-icon dark :small="isSubTree()">{{ nodeItem.icon }}</v-icon>
             </v-list-item-icon>
             <v-list-item-title class="font-weight-regular">
                 <span>{{ nodeItem.labelKey | translate }}</span>
             </v-list-item-title>
-            <v-list-item-action v-if="nodeItem.children && nodeItem.children.length">
-                <v-icon small dark :class="[expand?'mdi-rotate-180':'']">mdi-chevron-down</v-icon>
+            <v-list-item-action
+                v-if="nodeItem.children && nodeItem.children.length"
+            >
+                <v-icon small dark :class="[expand ? 'mdi-rotate-180' : '']"
+                    >mdi-chevron-down</v-icon
+                >
             </v-list-item-action>
         </v-list-item>
 
@@ -33,6 +42,7 @@
 import $ from "../../store/types";
 // eslint-disable-next-line no-unused-vars
 import { MenuItem } from 'src/models/MenuItem';
+import { OpenView } from 'src/models/OpenView';
 
 export default {
     name: "h-nav-tree-item",
@@ -51,7 +61,7 @@ export default {
     methods: {
         onClickItem() {
             if (this.nodeItem.viewName) {
-                this.$store.dispatch($.actions.APP_OPEN_VIEW, this.nodeItem);
+                this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromMenuItem(this.nodeItem));
             }
             else
                 this.expand = !this.expand;
