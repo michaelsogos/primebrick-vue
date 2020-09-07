@@ -1,10 +1,6 @@
 /* eslint-disable vue/no-parsing-error */
 <template>
-    <v-container
-        fluid
-        fill-height
-        class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0"
-    >
+    <v-container fluid fill-height class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0">
         <h-panel>
             <template v-slot:header>
                 <h-view-toolbar
@@ -25,7 +21,7 @@
                 dark
                 bottom
                 right
-                style="bottom:50px"
+                style="bottom: 50px"
                 @click="onAddItem()"
                 v-if="checkFabButtonVisibility()"
             >
@@ -44,7 +40,7 @@
                 :server-items-length="gridTotal"
                 :footer-props="{
                     showFirstLastPage: true,
-                    itemsPerPageOptions: [50]
+                    itemsPerPageOptions: [50],
                 }"
                 @update:page="onPageChange"
                 @update:sort-by="onSortField"
@@ -58,20 +54,9 @@
                 v-model="viewSelectedRows"
             >
                 <template v-slot:[`body.prepend`]="{ headers }">
-                    <tr
-                        class="v-data-table__empty-wrapper"
-                        v-if="checkColumnFiltersVisibility()"
-                    >
-                        <td
-                            v-for="(item, idx) in headers"
-                            :key="idx"
-                            class="pa-0 ma-0"
-                        >
-                            <template
-                                v-if="
-                                    checkFilterFieldVisibility(item, 'string')
-                                "
-                            >
+                    <tr class="v-data-table__empty-wrapper" v-if="checkColumnFiltersVisibility()">
+                        <td v-for="(item, idx) in headers" :key="idx" class="pa-0 ma-0">
+                            <template v-if="checkFilterFieldVisibility(item, 'string')">
                                 <v-row no-gutters>
                                     <v-col cols="2">
                                         <v-select
@@ -79,9 +64,7 @@
                                             solo
                                             flat
                                             dense
-                                            :ref="
-                                                `filter-operator-${item.value}`
-                                            "
+                                            :ref="`filter-operator-${item.value}`"
                                             :items="stringFilterOperators"
                                             value="CONTAINS"
                                             class="filter-input"
@@ -102,17 +85,13 @@
                                             @change="onFilterField(item)"
                                         >
                                             <template v-slot:prepend-inner>
-                                                <v-icon small
-                                                    >mdi-filter</v-icon
-                                                >
+                                                <v-icon small>mdi-filter</v-icon>
                                             </template>
                                         </v-text-field>
                                     </v-col>
                                 </v-row>
                             </template>
-                            <template
-                                v-if="checkFilterFieldVisibility(item, 'list')"
-                            >
+                            <template v-if="checkFilterFieldVisibility(item, 'list')">
                                 <v-row no-gutters>
                                     <v-col>
                                         <v-select
@@ -121,31 +100,20 @@
                                             flat
                                             dense
                                             :ref="`filter-input-${item.value}`"
-                                            :items="[
-                                                'df',
-                                                'dss',
-                                                'sfdfsf',
-                                                'ddghh'
-                                            ]"
+                                            :items="['df', 'dss', 'sfdfsf', 'ddghh']"
                                             value="df"
                                             class="filter-input"
                                             clearable
                                             @change="onFilterField(item)"
                                         >
                                             <template v-slot:prepend-inner>
-                                                <v-icon small
-                                                    >mdi-filter</v-icon
-                                                >
+                                                <v-icon small>mdi-filter</v-icon>
                                             </template>
                                         </v-select>
                                     </v-col>
                                 </v-row>
                             </template>
-                            <template
-                                v-if="
-                                    checkFilterFieldVisibility(item, 'search')
-                                "
-                            >
+                            <template v-if="checkFilterFieldVisibility(item, 'search')">
                                 <v-row no-gutters>
                                     <v-col>
                                         <!-- TODO: @michaelsogos -> Implement remote query -->
@@ -156,13 +124,7 @@
                                             dense
                                             :ref="`filter-input-${item.value}`"
                                             class="filter-input"
-                                            :items="[
-                                                'df',
-                                                'dss',
-                                                'sfdfsf',
-                                                'ddghh',
-                                                'it'
-                                            ]"
+                                            :items="['df', 'dss', 'sfdfsf', 'ddghh', 'it']"
                                             hide-selected
                                             label="Public APIs"
                                             @change="onFilterField(item)"
@@ -170,9 +132,7 @@
                                             clearable
                                         >
                                             <template v-slot:prepend-inner>
-                                                <v-icon small
-                                                    >mdi-filter</v-icon
-                                                >
+                                                <v-icon small>mdi-filter</v-icon>
                                             </template>
                                         </v-autocomplete>
                                     </v-col>
@@ -182,51 +142,24 @@
                     </tr>
                 </template>
 
-                <template
-                    v-for="boolColumn in getBooleanColumns"
-                    v-slot:[`item.${boolColumn}`]="{ item }"
-                >
-                    <v-simple-checkbox
-                        v-model="item[boolColumn]"
-                        disabled
-                        :key="boolColumn"
-                    ></v-simple-checkbox>
+                <template v-for="boolColumn in getBooleanColumns" v-slot:[`item.${boolColumn}`]="{ item }">
+                    <v-simple-checkbox v-model="item[boolColumn]" disabled :key="boolColumn"></v-simple-checkbox>
                 </template>
 
                 <template v-slot:[`item.actions`]="{ item }">
                     <div class="actionsCell">
-                        <v-icon
-                            v-if="checkRowButtonVisibility('open')"
-                            small
-                            class="mr-2"
-                            color="primary"
-                            @click.stop="onOpenItem(item)"
-                            >mdi-eye</v-icon
-                        >
-                        <v-icon
-                            v-if="checkRowButtonVisibility('edit')"
-                            small
-                            color="primary"
-                            class="mr-2"
-                            @click.stop="onEditItem(item)"
-                            >mdi-pencil</v-icon
-                        >
-                        <v-icon
-                            v-if="checkRowButtonVisibility('delete')"
-                            small
-                            class="mr-2"
-                            color="error"
-                            @click="onDeleteItem(item)"
-                            >mdi-delete-alert</v-icon
-                        >
-                        <v-icon
-                            v-if="checkRowButtonVisibility('archive')"
-                            small
-                            class="mr-2"
-                            color="error"
-                            @click="onArchiveItem(item)"
-                            >mdi-trash-can</v-icon
-                        >
+                        <v-icon v-if="checkRowButtonVisibility('open')" small class="mr-2" color="primary" @click.stop="onOpenItem(item)">
+                            mdi-eye
+                        </v-icon>
+                        <v-icon v-if="checkRowButtonVisibility('edit')" small color="primary" class="mr-2" @click.stop="onEditItem(item)">
+                            mdi-pencil
+                        </v-icon>
+                        <v-icon v-if="checkRowButtonVisibility('delete')" small class="mr-2" color="error" @click="onDeleteItem(item)">
+                            mdi-delete-alert
+                        </v-icon>
+                        <v-icon v-if="checkRowButtonVisibility('archive')" small class="mr-2" color="error" @click="onArchiveItem(item)">
+                            mdi-trash-can
+                        </v-icon>
                     </div>
                 </template>
             </v-data-table>

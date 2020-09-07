@@ -1,17 +1,8 @@
 <template>
-    <v-container
-        fluid
-        fill-height
-        class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0 blue-grey lighten-4"
-    >
+    <v-container fluid fill-height class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0 blue-grey lighten-4">
         <h-panel>
             <template v-slot:header>
-                <h-view-toolbar
-                    :view="view"
-                    @delete-items="onDeleteItem"
-                    @archive-items="onArchiveItem"
-                    @refresh="onRefresh"
-                ></h-view-toolbar>
+                <h-view-toolbar :view="view" @delete-items="onDeleteItem" @archive-items="onArchiveItem" @refresh="onRefresh"></h-view-toolbar>
                 <v-btn @click="test">test</v-btn>
             </template>
             <template v-slot:footer>
@@ -24,59 +15,33 @@
                             cols="12"
                             :lg="item.cols || 12"
                             :key="index"
-                            :class="[
-                                'px-2',
-                                'mt-2',
-                                index != getContainers.length - 1
-                                    ? 'mb-2'
-                                    : 'mb-0'
-                            ]"
+                            :class="['px-2', 'mt-2', index != getContainers.length - 1 ? 'mb-2' : 'mb-0']"
                         >
                             <v-card class="pa-4">
                                 <v-row>
-                                    <template
-                                        v-for="(field, index) in item.fields"
-                                    >
-                                        <v-col
-                                            :cols="field.cols || 12"
-                                            :key="index"
-                                        >
+                                    <template v-for="(field, index) in item.fields">
+                                        <v-col :cols="field.cols || 12" :key="index">
                                             <v-checkbox
                                                 dense
-                                                :label="
-                                                    field.labelKey | translate
-                                                "
+                                                :label="field.labelKey | translate"
                                                 v-model="viewData[field.name]"
-                                                v-if="
-                                                    field.type &&
-                                                        field.type == 'checkbox'
-                                                "
-                                            >
-                                            </v-checkbox>
+                                                v-if="field.type && field.type == 'checkbox'"
+                                            ></v-checkbox>
 
                                             <v-switch
                                                 dense
-                                                :label="
-                                                    field.labelKey | translate
-                                                "
+                                                :label="field.labelKey | translate"
                                                 v-model="viewData[field.name]"
-                                                v-else-if="
-                                                    field.type &&
-                                                        field.type == 'switch'
-                                                "
-                                            >
-                                            </v-switch>
+                                                v-else-if="field.type && field.type == 'switch'"
+                                            ></v-switch>
 
                                             <v-text-field
                                                 outlined
                                                 dense
-                                                :label="
-                                                    field.labelKey | translate
-                                                "
+                                                :label="field.labelKey | translate"
                                                 v-model="viewData[field.name]"
                                                 v-else
-                                            >
-                                            </v-text-field>
+                                            ></v-text-field>
                                         </v-col>
                                     </template>
                                 </v-row>
