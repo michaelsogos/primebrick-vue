@@ -5,49 +5,35 @@
         tile
         :color="`${computeColor(view.color)} lighten-5`"
         height="46"
-        :style="
-            `border-bottom: 2px solid ${computeCssColor(view.color)} !important`
-        "
+        :style="`border-bottom: 2px solid ${computeCssColor(view.color)} !important`"
     >
-        <v-btn
-            text
-            tile
-            class="caption primary--text"
-            v-if="checkToolbarButtonVisibility('add')"
-            @click="onAddItem()"
-        >
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('add')" @click="onAddItem">
             <v-icon left>mdi-plus</v-icon>
             {{ "add" | translate }}
         </v-btn>
-        <v-btn
-            text
-            tile
-            class="caption error--text"
-            v-if="checkToolbarButtonVisibility('delete')"
-            @click="$emit('delete-items')"
-        >
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('save')" @click="$emit('save')">
+            <v-icon left>mdi-content-save</v-icon>
+            {{ "save" | translate }}
+        </v-btn>
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('edit')" @click="$emit('edit')">
+            <v-icon left>mdi-pencil</v-icon>
+            {{ "edit" | translate }}
+        </v-btn>
+        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility('delete')" @click="$emit('delete')">
             <v-icon left>mdi-delete-alert</v-icon>
             {{ "delete" | translate }}
         </v-btn>
-        <v-btn
-            text
-            tile
-            class="caption error--text"
-            v-if="checkToolbarButtonVisibility('archive')"
-            @click="$emit('archive-items')"
-        >
+        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility('archive')" @click="$emit('archive')">
             <v-icon left>mdi-trash-can</v-icon>
             {{ "archive" | translate }}
         </v-btn>
-        <v-btn
-            text
-            tile
-            class="caption primary--text"
-            @click="$emit('refresh')"
-            v-if="checkToolbarButtonVisibility('refresh')"
-        >
+        <v-btn text tile class="caption primary--text" @click="$emit('refresh')" v-if="checkToolbarButtonVisibility('refresh')">
             <v-icon left>mdi-refresh</v-icon>
             {{ "refresh" | translate }}
+        </v-btn>
+        <v-btn text tile class="caption primary--text" @click="$emit('info')" v-if="checkToolbarButtonVisibility('info')">
+            <v-icon left>mdi-information-variant</v-icon>
+            {{ "information" | translate }}
         </v-btn>
         <v-spacer></v-spacer>
         <v-text-field
@@ -63,7 +49,7 @@
             color="primary"
             :background-color="`${computeColor(view.color)} lighten-4`"
             type="search"
-            style="max-width:400px;"
+            style="max-width: 400px"
             @change="$emit('search', viewSearchTerm)"
             v-model="viewSearchTerm"
             v-if="checkToolbarButtonVisibility('search')"
@@ -87,34 +73,17 @@
         </v-btn-toggle>
         <v-menu offset-y tile>
             <template v-slot:activator="{ on }">
-                <v-btn
-                    icon
-                    color="primary"
-                    small
-                    v-on="on"
-                    v-if="checkMenuVisibility()"
-                >
+                <v-btn icon color="primary" small v-on="on" v-if="checkMenuVisibility()">
                     <v-icon>mdi-dots-vertical</v-icon>
                 </v-btn>
             </template>
 
-            <v-list
-                dense
-                rounded
-                dark
-                :class="[`${computeColor('primary')}`, 'pa-1', 'ma-0']"
-            >
-                <v-list-item
-                    v-for="(item, idx) in getMenuLink()"
-                    :key="idx"
-                    @click="onOpenLink(item)"
-                >
+            <v-list dense rounded dark :class="[`${computeColor('primary')}`, 'pa-1', 'ma-0']">
+                <v-list-item v-for="(item, idx) in getMenuLink()" :key="idx" @click="onOpenLink(item)">
                     <v-list-item-icon>
                         <v-icon>{{ item.icon }}</v-icon>
                     </v-list-item-icon>
-                    <v-list-item-title>{{
-                        item.labelKey | translate
-                    }}</v-list-item-title>
+                    <v-list-item-title>{{ item.labelKey | translate }}</v-list-item-title>
                 </v-list-item>
             </v-list>
         </v-menu>
@@ -149,13 +118,22 @@ export default {
                     this.onAddItem();
                     break;
                 case "delete":
-                    this.$emit('onDeleteItems');
+                    this.$emit('delete');
                     break;
                 case "archive":
-                    this.$emit('onArchiveItems');
+                    this.$emit('archive');
                     break;
                 case "refresh":
-                    this.$emit('onRefresh');
+                    this.$emit('refresh');
+                    break;
+                case "save":
+                    this.$emit('save');
+                    break;
+                case "edit":
+                    this.$emit('edit');
+                    break;
+                case "info":
+                    this.$emit('info');
                     break;
             }
         },
@@ -177,6 +155,9 @@ export default {
         checkToolbarButtonVisibility(/** @type {string} */ actionName) {
             /** @type {View} */
             const thisView = this.view;
+            if (actionName == "save" && thisView.readonly) return false;
+            if (actionName == "edit" && thisView.readonly) return thisView.actions && thisView.actions.save && thisView.actions.save.enableToolbarButton == true;
+
             return thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableToolbarButton == true;
         },
         /** @returns {String} */
@@ -216,6 +197,15 @@ export default {
 
             const links = [];
             for (const action in thisView.actions) {
+                if (action == "save") {
+                    let realAction = action;
+                    if (thisView.readonly) realAction = 'edit';
+                    if (thisView.actions.save.enableMenuLink == true) {
+                        links.push({ labelKey: realAction, view: null, action: realAction, icon: this.getActionIcon(realAction) });
+                    }
+                    continue;
+                }
+
                 if (thisView.actions[action].enableMenuLink == true) {
                     links.push({ labelKey: action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
                 }
@@ -234,6 +224,12 @@ export default {
                     return 'mdi-trash-can';
                 case "refresh":
                     return 'mdi-refresh';
+                case "save":
+                    return 'mdi-content-save';
+                case "edit":
+                    return 'mdi-pencil';
+                case "info":
+                    return 'mdi-information-variant';
                 default:
                     return "";
             }

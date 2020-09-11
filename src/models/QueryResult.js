@@ -3,6 +3,6 @@ export class QueryResult {
 		/** @type {Array} */
 		this.data = [];
 		/** @type {Number} */
-		this.count = true;
+		this.count = null;
 	}
 }

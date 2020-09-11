@@ -12,10 +12,7 @@
                 dark
                 v-if="$store.state.app.isAuthenticated"
             >
-                <h-nav-tree
-                    :items="$store.state.app.drawerItems"
-                    ref="navTree"
-                ></h-nav-tree>
+                <h-nav-tree :items="$store.state.app.drawerItems" ref="navTree"></h-nav-tree>
             </v-navigation-drawer>
         </div>
 
@@ -25,38 +22,20 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
 
-            <v-menu
-                bottom
-                offset-y
-                min-width="200"
-                v-if="$store.state.app.isAuthenticated"
-            >
+            <v-menu bottom offset-y min-width="200" v-if="$store.state.app.isAuthenticated">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
-                        <v-avatar
-                            :color="$store.state.app.user.color || 'tertiary'"
-                            size="36"
-                        >
-                            <img
-                                v-if="$store.state.app.user.image"
-                                :src="$store.state.app.user.image"
-                                :alt="getUserFullname"
-                            />
-                            <span v-else class="white--text h4">{{
-                                getUserInitials
-                            }}</span>
+                        <v-avatar :color="$store.state.app.user.color || 'tertiary'" size="36">
+                            <img v-if="$store.state.app.user.image" :src="$store.state.app.user.image" :alt="getUserFullname" />
+                            <span v-else class="white--text h4">{{ getUserInitials }}</span>
                         </v-avatar>
                     </v-btn>
                 </template>
                 <v-list nav>
                     <v-list-item>
                         <v-list-item-content>
-                            <v-list-item-title class="title">{{
-                                getUserFullname
-                            }}</v-list-item-title>
-                            <v-list-item-subtitle>{{
-                                $store.state.app.user.email
-                            }}</v-list-item-subtitle>
+                            <v-list-item-title class="title">{{ getUserFullname }}</v-list-item-title>
+                            <v-list-item-subtitle>{{ $store.state.app.user.email }}</v-list-item-subtitle>
                         </v-list-item-content>
                     </v-list-item>
                     <v-divider></v-divider>
@@ -120,5 +99,27 @@ export default {
 
 body::-webkit-scrollbar {
     display: none;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 25px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--v-accent-base);
+    border-radius: 25px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--v-primary-base);
 }
 </style>

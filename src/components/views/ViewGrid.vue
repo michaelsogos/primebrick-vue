@@ -5,8 +5,8 @@
             <template v-slot:header>
                 <h-view-toolbar
                     :view="view"
-                    @delete-items="onDeleteItems"
-                    @archive-items="onArchiveItems"
+                    @delete="onDeleteItems"
+                    @archive="onArchiveItems"
                     @refresh="onRefresh"
                     @search="onSearch"
                 ></h-view-toolbar>
@@ -358,8 +358,7 @@ export default {
             /** @type {View} */
             const thisView = this.view;
             const context = item || this.viewSelectedRows[0];
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.open.view, context.id));
-
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.open.view, context.id, true));
         },
         onEditItem(item) {
             /** @type {View} */
