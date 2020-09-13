@@ -127,6 +127,14 @@ const store = new Vuex.Store({
         [$.mutations.APP_SET_TRANSLATIONS](state, translations) {
             state.app.translations.splice(0, state.app.translations.length, ...translations);
         },
+        /**
+         *
+         * @param {initialState} state
+         * @param {Translation[]} translations
+         */
+        [$.mutations.APP_ADD_TRANSLATIONS](state, translations) {
+            state.app.translations.push(...translations);
+        },
     },
     actions: {
         /**
@@ -135,7 +143,13 @@ const store = new Vuex.Store({
          */
         async [$.actions.APP_EXEC_INIT](context) {
             try {
-                let metaTranslations = await RestApiService.get($api.GET_META_TRANSLATIONS, null, true);
+                let metaTranslations = await RestApiService.get(
+                    $api.GET_META_TRANSLATIONS,
+                    {
+                        group: "login",
+                    },
+                    true
+                );
                 context.commit($.mutations.APP_SET_TRANSLATIONS, metaTranslations.response);
 
                 const authTokens = JSON.parse(sessionStorage.getItem("authTokens"));
@@ -157,6 +171,9 @@ const store = new Vuex.Store({
          */
         async [$.actions.APP_EXEC_OPTIN](context) {
             try {
+                let metaTranslations = await RestApiService.get($api.GET_META_TRANSLATIONS, null, true);
+                context.commit($.mutations.APP_ADD_TRANSLATIONS, metaTranslations.response);
+
                 let metaInfo = await RestApiService.get($api.GET_META_INFO, null, true);
                 context.commit($.mutations.APP_SET_INFO, metaInfo.response);
 

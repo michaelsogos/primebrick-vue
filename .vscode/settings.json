@@ -1,0 +1,12 @@
+{
+    "vetur.format.options.tabSize": 4,
+    "vetur.experimental.templateInterpolationService": true,
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "prettier.printWidth": 150,
+    "prettier.tabWidth": 4,
+    "prettier.vueIndentScriptAndStyle": true,
+    "prettier.jsxBracketSameLine": true,
+    "prettier.htmlWhitespaceSensitivity": "ignore",
+    "html.format.wrapLineLength": 150,
+    "vetur.format.defaultFormatter.html": "prettier"
+}

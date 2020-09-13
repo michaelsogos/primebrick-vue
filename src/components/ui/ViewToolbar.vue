@@ -9,7 +9,7 @@
     >
         <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('add')" @click="onAddItem">
             <v-icon left>mdi-plus</v-icon>
-            {{ "add" | translate }}
+            {{ "new" | translate }}
         </v-btn>
         <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('save')" @click="$emit('save')">
             <v-icon left>mdi-content-save</v-icon>

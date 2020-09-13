@@ -23,5 +23,6 @@ module.exports = {
         APP_REMOVE_VIEWTAB: "mutationAppRemoveViewTab",
         APP_SET_AUTHTOKEN: "mutationAppSetAuthToken",
         APP_SET_TRANSLATIONS: "mutationAppSetTranslations",
+        APP_ADD_TRANSLATIONS: "mutationAppAddTranslations"
     },
 };
