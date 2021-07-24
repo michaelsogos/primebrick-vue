@@ -13,7 +13,7 @@ module.exports = {
 	// 		});
 	// },
 	configureWebpack: {
-		devtool: "source-map",
+		devtool: "inline-source-map",
 		resolve: {
 			alias: {
 				src: path.resolve(__dirname, "src"),

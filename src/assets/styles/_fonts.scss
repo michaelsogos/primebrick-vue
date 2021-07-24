@@ -1,0 +1,10 @@
+$mdi-font-path: "../../../node_modules/@mdi/font/fonts" !default;
+
+@import "/node_modules/roboto-fontface/css/mixins.scss";
+@import "/node_modules/@mdi/font/scss/variables";
+@import "/node_modules/@mdi/font/scss/functions";
+@import "./mdifont";
+@import "/node_modules/@mdi/font/scss/core";
+@import "/node_modules/@mdi/font/scss/icons";
+@import "/node_modules/@mdi/font/scss/extras";
+@import "/node_modules/@mdi/font/scss/animated";

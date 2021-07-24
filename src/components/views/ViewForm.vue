@@ -185,7 +185,7 @@ import { EntityInfo } from 'src/models/EntityInfo';
 export default {
     name: "view-form",
     props: {
-        view: Object
+        view: View
     },
     data: function () {
         return {
@@ -193,17 +193,15 @@ export default {
             formValidity: true,
             showInfoDialog: false,
             /** @type {EntityInfo} */
-            info: new EntityInfo()
+            info: new EntityInfo(),
+            viewDefinition: this.view
         };
     },
     computed: {
         /** @returns {ViewContainer[]} */
         getContainers() {
-            if (!this.view) return [];
-
-            /** @type {View} */
-            const thisView = this.view;
-            return thisView.definition.containers;
+            if (!this.viewDefinition) return [];
+            return this.viewDefinition.definition.containers;
         },
         /** @returns {{name:String, errors: String[]}[]} */
         getNotValidFields() {
@@ -226,39 +224,32 @@ export default {
     methods: {
         onSave() {
             if (!this.formValidity) return;
-
-            /** @type {View} */
-            const thisView = this.view;
-
-            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(thisView.definition.entity, this.viewData)).then((entity) => this.viewData = entity);
+            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.definition.entity, this.viewData)).then((entity) => this.viewData = entity);
         },
         onEdit() {
-            this.view.readonly = false;
+            this.viewDefinition.readonly = false;
         },
         onDelete() {
-            alert(this.view.entityId);
+            alert(this.viewDefinition.entityId);
         },
         onArchive() {
-            alert(this.view.entityId);
+            alert(this.viewDefinition.entityId);
         },
         onRefresh() {
             this.loadData();
         },
         onInfo() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (!thisView.entityId) {
+            if (!this.viewDefinition.entityId) {
                 this.info = null;
                 this.showInfoDialog = true;
             }
             else {
                 const query = new Query();
-                query.entity = thisView.definition.entity;
+                query.entity = this.viewDefinition.definition.entity;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
-                searchFilter.expressionValues["id"] = thisView.entityId;
+                searchFilter.expressionValues["id"] = this.viewDefinition.entityId;
                 searchFilter.expressions.push(`$self.id = :id`);
                 query.filters.push(searchFilter);
 
@@ -285,18 +276,15 @@ export default {
             return rules;
         },
         async loadData() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (!thisView.entityId)
+            if (!this.viewDefinition.entityId)
                 this.viewData = {};
             else {
                 const query = new Query();
-                query.entity = thisView.definition.entity;
+                query.entity = this.viewDefinition.definition.entity;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
-                searchFilter.expressionValues["id"] = thisView.entityId;
+                searchFilter.expressionValues["id"] = this.viewDefinition.entityId;
                 searchFilter.expressions.push(`$self.id = :id`);
                 query.filters.push(searchFilter);
 
@@ -306,10 +294,7 @@ export default {
             setTimeout(() => this.$refs.form.validate(), 0);
         },
         checkIsSaveEnable() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (!thisView.actions || !thisView.actions.save) this.view.readonly = true;
+            if (!this.viewDefinition.actions || !this.viewDefinition.actions.save) this.viewDefinition.readonly = true;
         }
     },
     mounted() {

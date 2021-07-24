@@ -150,6 +150,7 @@ const store = new Vuex.Store({
                     },
                     true
                 );
+
                 context.commit($.mutations.APP_SET_TRANSLATIONS, metaTranslations.response);
 
                 const authTokens = JSON.parse(sessionStorage.getItem("authTokens"));
@@ -171,7 +172,13 @@ const store = new Vuex.Store({
          */
         async [$.actions.APP_EXEC_OPTIN](context) {
             try {
-                let metaTranslations = await RestApiService.get($api.GET_META_TRANSLATIONS, null, true);
+                let metaTranslations = await RestApiService.get(
+                    $api.GET_META_TRANSLATIONS,
+                    {
+                        group: "core",
+                    },
+                    true
+                );
                 context.commit($.mutations.APP_ADD_TRANSLATIONS, metaTranslations.response);
 
                 let metaInfo = await RestApiService.get($api.GET_META_INFO, null, true);
@@ -256,7 +263,8 @@ const store = new Vuex.Store({
         },
     },
     getters: {
-        [$.getters.APP_GET_RECORDS]: (state) =>
+        [$.getters.APP_GET_RECORDS]:
+            (state) =>
             /**
              *
              * @param {Query} query
@@ -272,7 +280,8 @@ const store = new Vuex.Store({
                     alert(result.clientMessage);
                 }
             },
-        [$.getters.APP_GET_RECORD]: (state) =>
+        [$.getters.APP_GET_RECORD]:
+            (state) =>
             /**
              *
              * @param {Query} query
@@ -288,7 +297,8 @@ const store = new Vuex.Store({
                     alert(result.clientMessage);
                 }
             },
-        [$.getters.APP_GET_RECORDINFO]: (state) =>
+        [$.getters.APP_GET_RECORDINFO]:
+            (state) =>
             /**
              *
              * @param {Query} query
