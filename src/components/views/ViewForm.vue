@@ -178,7 +178,7 @@
 import $ from "../../store/types";
 import { Query } from 'src/models/Query';
 // eslint-disable-next-line no-unused-vars
-import { View, ViewFilter, ViewFormDefinition, ViewContainer, ViewContainerField } from 'src/models/View';
+import { View, ViewFilter, ViewContainer, ViewContainerField } from 'src/models/View';
 import { SaveEntity } from 'src/models/SaveEntity';
 import { EntityInfo } from 'src/models/EntityInfo';
 

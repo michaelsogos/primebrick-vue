@@ -24,6 +24,7 @@
                 style="bottom: 50px"
                 @click="onAddItem()"
                 v-if="checkFabButtonVisibility()"
+                :title="this.$options.filters.translate('add-new-record')"
             >
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
@@ -169,10 +170,7 @@
 
 <script>
 import $ from "../../store/types";
-// eslint-disable-next-line no-unused-vars
-import { QueryResult } from "../../models/QueryResult";
 import { LowLevelUtils } from "../../common/LowLevelUtils";
-// eslint-disable-next-line no-unused-vars
 import { View, ViewSort, ViewFilter, ViewFilterField } from 'src/models/View';
 import { Query } from 'src/models/Query';
 import { OpenView } from 'src/models/OpenView';
@@ -180,11 +178,13 @@ import { OpenView } from 'src/models/OpenView';
 export default {
     name: "view-grid",
     props: {
-        view: Object,
+        view: View,
     },
     data: function () {
         return {
-            /** @type {QueryResult} */
+            /** @type {import ("../../models/View").ViewGridDefinition} */
+            viewDefinition: this.view.definition,
+            /** @type {import("../../models/QueryResult").QueryResult} */
             viewData: null,
             viewDataLoading: false,
             viewDataPageNumber: 1,
@@ -200,12 +200,12 @@ export default {
                     value: "CONTAINS"
                 },
                 {
-                    text: this.$options.filters.translate("starts-width"),
-                    value: "STARTSWIDTH"
+                    text: this.$options.filters.translate("starts-with"),
+                    value: "STARTSWITH"
                 },
                 {
-                    text: this.$options.filters.translate("ends-width"),
-                    value: "ENDSWIDTH"
+                    text: this.$options.filters.translate("ends-with"),
+                    value: "ENDSWITH"
                 }
             ]
         };
@@ -215,13 +215,10 @@ export default {
         gridHeaders() {
             if (!this.view) return [];
 
-            /** @type {View} */
-            const thisView = this.view;
-
-            let headers = thisView.definition.fields.map(item => {
+            let headers = this.viewDefinition.fields.map(item => {
                 let filter = null;
-                if (thisView.actions && thisView.actions.filter && thisView.actions.filter.enableColumns == true) {
-                    filter = thisView.actions.filter.fields.find((f) => f.field == item.name);
+                if (this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true) {
+                    filter = this.view.actions.filter.fields.find((f) => f.field == item.name);
                 }
 
                 return {
@@ -243,8 +240,8 @@ export default {
             });
 
             let actionButtonsCount = 0;
-            for (const action in thisView.actions) {
-                if (thisView.actions[action].enableRowButton) {
+            for (const action in this.view.actions) {
+                if (this.view.actions[action].enableRowButton) {
                     actionButtonsCount++;
                 }
             }
@@ -262,14 +259,12 @@ export default {
 
             return headers;
         },
+        /**
+         * @returns {String[]}
+         */
         getBooleanColumns() {
             if (!this.view) return [];
-
-            /** @type {View} */
-            const thisView = this.view;
-
-            return thisView.definition.fields.filter((f) => f.type == 'boolean').map((f) => f.name);
-
+            return this.viewDefinition.fields.filter((f) => f.type == 'boolean').map((f) => f.name);
         },
         /** @returns {Number} */
         gridTotal() {
@@ -280,11 +275,8 @@ export default {
         gridRecords() {
             if (!this.viewData || !this.viewData.data || this.viewData.data.length <= 0) return [];
 
-            /** @type {View} */
-            const thisView = this.view;
-
             let expressionEvaluators = [];
-            for (let highlight of thisView.highlighters) {
+            for (let highlight of this.view.highlighters) {
                 let evaluator = {
                     eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], highlight.expression),
                     cssClasses: []
@@ -305,7 +297,7 @@ export default {
                     id: item.id
                 };
 
-                for (let field of thisView.definition.fields) {
+                for (let field of this.viewDefinition.fields) {
                     if (!Object.prototype.hasOwnProperty.call(item, field.name))
                         record[field.name] = null;
                     // else if (field.targetName) {
@@ -355,23 +347,16 @@ export default {
             this.loadData();
         },
         onOpenItem(item) {
-            /** @type {View} */
-            const thisView = this.view;
             const context = item || this.viewSelectedRows[0];
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.open.view, context.id, true));
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.open.view, context.id, true));
         },
         onEditItem(item) {
-            /** @type {View} */
-            const thisView = this.view;
             const context = item || this.viewSelectedRows[0];
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.edit.view, context.id));
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.edit.view, context.id));
 
         },
         onAddItem() {
-            /** @type {View} */
-            const thisView = this.view;
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.add.view, null));
-
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.add.view, null));
         },
         onDeleteItem(item) {
             alert(item.id);
@@ -388,23 +373,17 @@ export default {
         onDoubleClickRow(/** @type {Event}*/event, row) {
             event.stopPropagation();
 
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (thisView.actions && thisView.actions.open && thisView.actions.open.enableDoubleClick)
+            if (this.view.actions && this.view.actions.open && this.view.actions.open.enableDoubleClick)
                 this.onOpenItem(row.item);
-            else if (thisView.actions && thisView.actions.edit && thisView.actions.edit.enableDoubleClick)
+            else if (this.view.actions && this.view.actions.edit && this.view.actions.edit.enableDoubleClick)
                 this.onEditItem(row.item);
         },
         onClickRow(rowData, row) {
             row.select(!row.isSelected);
         },
         onClickToolbarButton(/** @type {string} */actionName) {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].view)
-                alert(thisView.actions[actionName].view);
+            if (this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].view)
+                alert(this.view.actions[actionName].view);
         },
         onSearch(/** @type {String} */ searchTerm) {
             this.viewDataPageNumber = 1;
@@ -441,11 +420,11 @@ export default {
                         this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}%`;
                         this.viewColumnFilters[filterFieldIndex].operator = 'like';
                         break;
-                    case "STARTSWIDTH":
+                    case "STARTSWITH":
                         this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}%`;
                         this.viewColumnFilters[filterFieldIndex].operator = 'like';
                         break;
-                    case "ENDSWIDTH":
+                    case "ENDSWITH":
                         this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}`;
                         this.viewColumnFilters[filterFieldIndex].operator = 'like';
                         break;
@@ -462,35 +441,23 @@ export default {
         },
         /** @returns {Boolean} */
         checkRowButtonVisibility(/** @type {string} */ actionName) {
-            /** @type {View} */
-            const thisView = this.view;
-
-            return thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableRowButton == true;
+            return this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableRowButton == true;
         },
         checkColumnFiltersVisibility() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            return thisView.actions && thisView.actions.filter && thisView.actions.filter.enableColumns == true;
+            return this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true;
         },
         checkFilterFieldVisibility(header, type) {
             return !['data-table-select', 'actions'].includes(header.value) && header.columnFilter && header.columnFilter.type == type;
         },
         checkFabButtonVisibility() {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (thisView.actions && thisView.actions.add && thisView.actions.add.enableFloatingButton == true)
+            if (this.view.actions && this.view.actions.add && this.view.actions.add.enableFloatingButton == true)
                 return true;
             else false;
         },
         /** @returns {Boolean} */
         getGridOption(/** @type {string} */ optionName) {
-            /** @type {View} */
-            const thisView = this.view;
-
-            if (thisView.options) {
-                if (thisView.options[optionName] == true) return true;
+            if (this.view.options) {
+                if (this.view.options[optionName] == true) return true;
                 else return false;
             }
             else return false;
@@ -506,13 +473,11 @@ export default {
         async loadData() {
             this.viewDataLoading = true;
 
-            /** @type {View} */
-            const thisView = this.view;
-
             const query = new Query();
-            query.entity = thisView.definition.entity;
-            query.fields = thisView.definition.fields.map(item => { return item.name; });
-            query.filters = Array.from(thisView.definition.filters);
+            query.brick = this.viewDefinition.brick;
+            query.entity = this.viewDefinition.entity;
+            query.fields = this.viewDefinition.fields.map(item => { return item.name; });
+            query.filters = Array.from(this.viewDefinition.filters);
             query.take = 50;
             query.skip = (this.viewDataPageNumber - 1) * 50;
 
@@ -524,8 +489,8 @@ export default {
                     query.sorts.push(sort);
                 }
             }
-            else if (thisView.definition.sorts) {
-                query.sorts = thisView.definition.sorts;
+            else if (this.viewDefinition.sorts) {
+                query.sorts = this.viewDefinition.sorts;
             }
 
             if (this.viewSearchTerm) {
@@ -535,7 +500,7 @@ export default {
                 searchFilter.expressionValues = {};
                 searchFilter.expressionValues["searchTerm"] = `%${this.viewSearchTerm}%`;
 
-                for (const searchField of thisView.actions.search.fields) {
+                for (const searchField of this.view.actions.search.fields) {
                     searchFilter.expressions.push(`$self.${searchField} like :searchTerm`);
                 }
 

@@ -207,7 +207,7 @@ export default {
                 }
 
                 if (thisView.actions[action].enableMenuLink == true) {
-                    links.push({ labelKey: action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
+                    links.push({ labelKey: action == "add" ? "new" : action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
                 }
             }
 

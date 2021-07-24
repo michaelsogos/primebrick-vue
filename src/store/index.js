@@ -14,7 +14,6 @@ import { AuthUserProfile } from "../models/AuthUserProfile";
 import { StringUtils } from "../common/StringUtils";
 import { Translation } from "../models/Translation";
 import { AppInfo } from "../models/AppInfo";
-// eslint-disable-next-line no-unused-vars
 import { View } from "../models/View";
 // eslint-disable-next-line no-unused-vars
 import { Query } from "../models/Query";
@@ -224,8 +223,7 @@ const store = new Vuex.Store({
             });
 
             if (!result.hasError) {
-                /** @type {View} */
-                let view = result.response;
+                let view = Object.assign(new View(), result.response);
                 view.entityId = openView.entityId;
                 view.readonly = openView.readonly;
                 if (!view.icon) view.icon = openView.icon;

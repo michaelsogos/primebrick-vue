@@ -28,9 +28,11 @@ export class View {
 export class ViewDefinition {
     constructor() {
         /** @type {String} */
+        this.brick = null;
+        /** @type {String} */
         this.entity = null;
         /** @type {String} */
-        this.type = "form";
+        this.type = null;
         /** @type {String[]} */
         this.perms = [];
     }
