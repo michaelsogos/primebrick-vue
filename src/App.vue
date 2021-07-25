@@ -51,6 +51,7 @@
 
         <v-main class="content-not-scrollable blue-grey lighten-4">
             <component :is="$store.state.app.page"></component>
+            <h-confirm-dialog></h-confirm-dialog>
         </v-main>
     </v-app>
 </template>

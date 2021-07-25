@@ -189,19 +189,21 @@ export default {
     },
     data: function () {
         return {
+            readonly: this.view.readonly,
             viewData: null,
             formValidity: true,
             showInfoDialog: false,
             /** @type {EntityInfo} */
             info: new EntityInfo(),
-            viewDefinition: this.view
+            /** @type {import ("../../models/View").ViewFormDefinition} */
+            viewDefinition: this.view.definition,
         };
     },
     computed: {
         /** @returns {ViewContainer[]} */
         getContainers() {
-            if (!this.viewDefinition) return [];
-            return this.viewDefinition.definition.containers;
+            if (!this.view) return [];
+            return this.viewDefinition.containers;
         },
         /** @returns {{name:String, errors: String[]}[]} */
         getNotValidFields() {
@@ -224,32 +226,33 @@ export default {
     methods: {
         onSave() {
             if (!this.formValidity) return;
-            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.definition.entity, this.viewData)).then((entity) => this.viewData = entity);
+            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.entity, this.viewData)).then((entity) => this.viewData = entity);
         },
         onEdit() {
-            this.viewDefinition.readonly = false;
+            this.readonly = false;
         },
         onDelete() {
-            alert(this.viewDefinition.entityId);
+            alert(this.view.entityId);
         },
         onArchive() {
-            alert(this.viewDefinition.entityId);
+            alert(this.view.entityId);
         },
         onRefresh() {
             this.loadData();
         },
         onInfo() {
-            if (!this.viewDefinition.entityId) {
+            if (!this.view.entityId) {
                 this.info = null;
                 this.showInfoDialog = true;
             }
             else {
                 const query = new Query();
-                query.entity = this.viewDefinition.definition.entity;
+                query.brick = this.viewDefinition.brick;
+                query.entity = this.viewDefinition.entity;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
-                searchFilter.expressionValues["id"] = this.viewDefinition.entityId;
+                searchFilter.expressionValues["id"] = this.view.entityId;
                 searchFilter.expressions.push(`$self.id = :id`);
                 query.filters.push(searchFilter);
 
@@ -276,15 +279,16 @@ export default {
             return rules;
         },
         async loadData() {
-            if (!this.viewDefinition.entityId)
+            if (!this.view.entityId)
                 this.viewData = {};
             else {
                 const query = new Query();
-                query.entity = this.viewDefinition.definition.entity;
+                query.brick = this.viewDefinition.brick;
+                query.entity = this.viewDefinition.entity;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
-                searchFilter.expressionValues["id"] = this.viewDefinition.entityId;
+                searchFilter.expressionValues["id"] = this.view.entityId;
                 searchFilter.expressions.push(`$self.id = :id`);
                 query.filters.push(searchFilter);
 
@@ -294,7 +298,7 @@ export default {
             setTimeout(() => this.$refs.form.validate(), 0);
         },
         checkIsSaveEnable() {
-            if (!this.viewDefinition.actions || !this.viewDefinition.actions.save) this.viewDefinition.readonly = true;
+            if (!this.view.actions || !this.view.actions.save) this.readonly = true;
         }
     },
     mounted() {

@@ -23,6 +23,8 @@ module.exports = {
         APP_REMOVE_VIEWTAB: "mutationAppRemoveViewTab",
         APP_SET_AUTHTOKEN: "mutationAppSetAuthToken",
         APP_SET_TRANSLATIONS: "mutationAppSetTranslations",
-        APP_ADD_TRANSLATIONS: "mutationAppAddTranslations"
+        APP_ADD_TRANSLATIONS: "mutationAppAddTranslations",
+        APP_SHOW_CONFIRMDIALOG: "mutationAppShowConfirmDialog",
+        APP_HIDE_CONFIRMDIALOG: "mutationAppHideConfirmDialog",
     },
 };

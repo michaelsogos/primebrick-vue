@@ -7,6 +7,8 @@ export class View {
         /** @type {String} */
         this.labelKey = null;
         /** @type {String} */
+        this.entityNameLabelKey = null;
+        /** @type {String} */
         this.icon = null;
         /** @type {String} */
         this.color = null;
@@ -33,6 +35,8 @@ export class ViewDefinition {
         this.entity = null;
         /** @type {String} */
         this.type = null;
+        /** @type {String} */
+        this.entityNameTemplate = null;
         /** @type {String[]} */
         this.perms = [];
     }

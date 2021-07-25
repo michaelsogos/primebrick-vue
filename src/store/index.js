@@ -30,6 +30,7 @@ Vue.use(Vuex);
 const initialState = {
     app: {
         isReady: false,
+        /** @type {MenuItem[]} */
         drawerItems: [],
         /** @type {View[]} */
         viewTabs: [],
@@ -44,6 +45,10 @@ const initialState = {
         },
         /** @type {Translation[]} */
         translations: [],
+        ui: {
+            /** @type {import("../models/ConfirmDialog").ConfirmDialog} */
+            confirmDialog: null,
+        },
     },
 };
 
@@ -133,6 +138,22 @@ const store = new Vuex.Store({
          */
         [$.mutations.APP_ADD_TRANSLATIONS](state, translations) {
             state.app.translations.push(...translations);
+        },
+        /**
+         *
+         * @param {initialState} state
+         * @param {ConfirmDialog} confirmDialog
+         */
+        [$.mutations.APP_SHOW_CONFIRMDIALOG](state, confirmDialog) {
+            state.app.ui.confirmDialog = confirmDialog;
+            state.app.ui.confirmDialog.show = true;
+        },
+        /**
+         *
+         * @param {initialState} state
+         */
+        [$.mutations.APP_HIDE_CONFIRMDIALOG](state) {
+            state.app.ui.confirmDialog.show = false;
         },
     },
     actions: {
@@ -329,30 +350,7 @@ const store = new Vuex.Store({
                 if (translation.isTemplate == false) {
                     return str;
                 } else {
-                    if (!Array.isArray(params)) {
-                        params = [params];
-                    }
-                    if (params && params.length) {
-                        var result = str;
-                        var splittedString = str.split(" "); //TODO: @mso -> Revise this code, we should use REGEX MATCH and REPLACE to look for any placeholder (consider that a translation can have attached letter so space is not enought)
-                        var keyArray = [];
-                        params.forEach(function (o) {
-                            Object.getOwnPropertyNames(o).forEach(function (k) {
-                                keyArray.push(k);
-                            });
-                        });
-                        splittedString.forEach((string) => {
-                            if (string.includes("${")) {
-                                var substr = string.substring(2, string.length - 1);
-                                if (keyArray.includes(substr)) {
-                                    let currentObj = params.find((k) => Object.getOwnPropertyNames(k) == substr);
-                                    result = result.replace(string, currentObj[substr]);
-                                }
-                            }
-                        });
-
-                        return result;
-                    } else return str;
+                    return str.interpolate(params);
                 }
             }
         },

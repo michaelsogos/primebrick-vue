@@ -174,6 +174,8 @@ import { LowLevelUtils } from "../../common/LowLevelUtils";
 import { View, ViewSort, ViewFilter, ViewFilterField } from 'src/models/View';
 import { Query } from 'src/models/Query';
 import { OpenView } from 'src/models/OpenView';
+import { ConfirmDialog } from '../../models/ConfirmDialog';
+import { StringUtils } from "../../common/StringUtils";
 
 export default {
     name: "view-grid",
@@ -359,10 +361,38 @@ export default {
             this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.add.view, null));
         },
         onDeleteItem(item) {
-            alert(item.id);
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+            const dialog = new ConfirmDialog();
+            dialog.title = this.$options.filters.translate("delete-entity-dialog-title", { entityName });
+            dialog.subTitle = recordName || `${this.$options.filters.translate("record")} id: ${item.id}`;
+            dialog.message = this.$options.filters.translate("delete-entity-dialog-message", { entityName });
+            dialog.iconColor = "error";
+            dialog.icon = 'mdi-delete-alert';
+            this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
         },
         onDeleteItems() {
-            alert(this.viewSelectedRows.join(","));
+            if (this.viewSelectedRows.length <= 0) {
+                const dialog = new ConfirmDialog(true);
+                dialog.title = this.$options.filters.translate("invalid-action");
+                dialog.message = this.$options.filters.translate("no-rows-selected");
+                dialog.iconColor = "warning";
+                dialog.icon = 'mdi-exclamation-thick';
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
+            else if (this.viewSelectedRows.length == 1) {
+                this.onDeleteItem(this.viewSelectedRows[0]);
+            }
+            else {
+                const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+                const dialog = new ConfirmDialog();
+                dialog.title = this.$options.filters.translate("delete-entity-dialog-title", { entityName });
+                dialog.subTitle = `${this.$options.filters.translate("selected-records")}: ${this.viewSelectedRows.length}`;
+                dialog.message = this.$options.filters.translate("delete-entity-dialog-message", { entityName });
+                dialog.iconColor = "error";
+                dialog.icon = 'mdi-delete-alert';
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
         },
         onArchiveItems() {
             alert(this.viewSelectedRows.join(","));
