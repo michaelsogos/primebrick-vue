@@ -9,6 +9,7 @@ const apiEndPoints = {
     POST_GET_ENTITY: "api/data/findOne",
     POST_SAVE_ENTITY: "api/data/save",
     POST_GET_RECORDINFO: "api/data/info",
+    POST_DELETE_ENTITY: "api/data/delete",
 };
 
 export default apiEndPoints;

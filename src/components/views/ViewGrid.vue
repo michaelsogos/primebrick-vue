@@ -176,6 +176,7 @@ import { Query } from 'src/models/Query';
 import { OpenView } from 'src/models/OpenView';
 import { ConfirmDialog } from '../../models/ConfirmDialog';
 import { StringUtils } from "../../common/StringUtils";
+import { DeleteEntity } from '../../models/DeleteEntity';
 
 export default {
     name: "view-grid",
@@ -369,7 +370,16 @@ export default {
             dialog.message = this.$options.filters.translate("delete-entity-dialog-message", { entityName });
             dialog.iconColor = "error";
             dialog.icon = 'mdi-delete-alert';
+            dialog.yesButtonCallback = () => this.deleteItem(item);
             this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+        },
+        async deleteItem(item) {
+            const result = await this.$store.dispatch($.actions.APP_DELETE_ENTITY, new DeleteEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
+            if (result) {
+                console.log(result);
+                alert("Restore delete record ?");
+            }
+            this.loadData();
         },
         onDeleteItems() {
             if (this.viewSelectedRows.length <= 0) {

@@ -6,6 +6,7 @@ module.exports = {
         APP_LOGOUT_USER: "actionAppLogoutUser",
         APP_EXEC_OPTIN: "actionAppExecOptin",
         APP_SAVE_ENTITY: "actionAppSaveEntity",
+        APP_DELETE_ENTITY: "actionAppDeleteEntity",
     },
     getters: {
         APP_GET_RECORDS: "getterAppGetRecords",

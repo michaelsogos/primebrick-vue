@@ -6,31 +6,19 @@ import Vuex, { ActionContext } from "vuex";
 import $ from "./types";
 import { RestApiService } from "../services/RestApiService";
 import $api from "../enums/ApiEndPoints";
-// eslint-disable-next-line no-unused-vars
-import { MenuItem } from "../models/MenuItem";
-// eslint-disable-next-line no-unused-vars
-import { AuthTokensPayload } from "../models/AuthTokensPayload";
 import { AuthUserProfile } from "../models/AuthUserProfile";
 import { StringUtils } from "../common/StringUtils";
 import { Translation } from "../models/Translation";
 import { AppInfo } from "../models/AppInfo";
 import { View } from "../models/View";
-// eslint-disable-next-line no-unused-vars
-import { Query } from "../models/Query";
 import Vuetify from "../plugins/vuetify";
-// eslint-disable-next-line no-unused-vars
-import { QueryResult } from "../models/QueryResult";
-// eslint-disable-next-line no-unused-vars
-import { OpenView } from "../models/OpenView";
-// eslint-disable-next-line no-unused-vars
-import { SaveEntity } from "../models/SaveEntity";
 
 Vue.use(Vuex);
 
 const initialState = {
     app: {
         isReady: false,
-        /** @type {MenuItem[]} */
+        /** @type {import("../models/MenuItem").MenuItem[]} */
         drawerItems: [],
         /** @type {View[]} */
         viewTabs: [],
@@ -67,7 +55,7 @@ const store = new Vuex.Store({
         /**
          *
          * @param {initialState} state
-         * @param {MenuItem[]} menuItems
+         * @param {import("../models/MenuItem").MenuItem[]} menuItems
          */
         [$.mutations.APP_SET_DRAWERITEMS](state, menuItems) {
             state.app.drawerItems.splice(0);
@@ -92,7 +80,7 @@ const store = new Vuex.Store({
         /**
          *
          * @param {initialState} state
-         * @param {AuthTokensPayload} authTokens
+         * @param {import("../models/AuthTokensPayload").AuthTokensPayload} authTokens
          */
         [$.mutations.APP_SET_AUTHTOKEN](state, authTokens) {
             if (authTokens) {
@@ -222,7 +210,7 @@ const store = new Vuex.Store({
             let result = await RestApiService.post($api.POST_USER_LOGIN, credentials);
 
             if (!result.hasError) {
-                /** @type {AuthTokensPayload} */
+                /** @type {import("../models/AuthTokensPayload").AuthTokensPayload} */
                 const authTokens = result.response;
 
                 context.commit($.mutations.APP_SET_AUTHTOKEN, authTokens);
@@ -236,7 +224,7 @@ const store = new Vuex.Store({
         /**
          *
          * @param {ActionContext<initialState>} context
-         * @param {OpenView} openView
+         * @param {import("../models/OpenView").OpenView} openView
          */
         async [$.actions.APP_OPEN_VIEW](context, openView) {
             let result = await RestApiService.get($api.GET_META_VIEW, {
@@ -267,13 +255,27 @@ const store = new Vuex.Store({
         /**
          *
          * @param {ActionContext<initialState>} context
-         * @param {SaveEntity} saveEntity
+         * @param {import("../models/SaveEntity").SaveEntity} saveEntity
          */
         async [$.actions.APP_SAVE_ENTITY](context, saveEntity) {
             let result = await RestApiService.post($api.POST_SAVE_ENTITY, saveEntity);
 
             if (!result.hasError) {
-                console.log(result.response.data[0]);
+                return result.response.data.length == 1 ? result.response.data[0] : null;
+            } else {
+                console.error(result.exception);
+                alert(result.clientMessage);
+            }
+        },
+        /**
+         *
+         * @param {ActionContext<initialState>} context
+         * @param {import("../models/DeleteEntity").DeleteEntity} deleteEntity
+         */
+        async [$.actions.APP_DELETE_ENTITY](context, deleteEntity) {
+            let result = await RestApiService.post($api.POST_DELETE_ENTITY, deleteEntity);
+
+            if (!result.hasError) {
                 return result.response.data.length == 1 ? result.response.data[0] : null;
             } else {
                 console.error(result.exception);
@@ -286,8 +288,8 @@ const store = new Vuex.Store({
             (state) =>
             /**
              *
-             * @param {Query} query
-             * @returns {QueryResult}
+             * @param {import("../models/Query").Query} query
+             * @returns {import("../models/QueryResult").QueryResult}
              */
             async (query) => {
                 let result = await RestApiService.post($api.POST_GET_DATA, query);
@@ -303,7 +305,7 @@ const store = new Vuex.Store({
             (state) =>
             /**
              *
-             * @param {Query} query
+             * @param {import("../models/Query").Query} query
              * @returns {Object}
              */
             async (query) => {
@@ -320,7 +322,7 @@ const store = new Vuex.Store({
             (state) =>
             /**
              *
-             * @param {Query} query
+             * @param {import("../models/Query").Query} query
              * @returns {Object}
              */
             async (query) => {
