@@ -226,7 +226,7 @@ export default {
     methods: {
         onSave() {
             if (!this.formValidity) return;
-            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.entity, this.viewData)).then((entity) => this.viewData = entity);
+            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.brick, this.viewDefinition.entity, this.viewData)).then((entity) => this.viewData = entity);
         },
         onEdit() {
             this.readonly = false;

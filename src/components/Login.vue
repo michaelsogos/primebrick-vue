@@ -4,21 +4,17 @@
             <v-col md="3" sm="6">
                 <v-card color="secondary" dark elevation="0">
                     <v-card-title class="text-center">
-                        <div
-                            class="text-center pt-5 text-h4"
-                            style="width:100%;"
-                        >{{'login'|translate}}</div>
+                        <div class="text-center pt-5 text-h4" style="width: 100%">{{ "login" | translate }}</div>
                     </v-card-title>
 
-                    <v-card-subtitle class="text-center">{{'login-hint'|translate}}</v-card-subtitle>
+                    <v-card-subtitle class="text-center">{{ "login-hint" | translate }}</v-card-subtitle>
 
                     <v-card-text>
                         <v-form>
-                            <v-alert
-                                :value="showAlertCapsLock"
-                                type="warning"
-                                icon="mdi-alert-octagram"
-                            >{{ "caps-lock-warning" | translate }}</v-alert>
+                            <v-alert :value="showAlertCapsLock" type="warning" border="left" :colored-border="true" dense  text class="mt-4 warning lighten-4" light icon="mdi-alert" >
+                                {{ "caps-lock-warning" | translate }}
+                            </v-alert>
+                                
                             <v-text-field
                                 solo-inverted
                                 flat
@@ -33,6 +29,7 @@
                                 ref="username"
                                 tabindex="1"
                             ></v-text-field>
+
                             <v-text-field
                                 solo-inverted
                                 flat
@@ -50,15 +47,10 @@
                                 tabindex="2"
                             ></v-text-field>
 
-                            <v-btn
-                                color="tertiary"
-                                large
-                                block
-                                @click.stop="onLogin"
-                                elevation="0"
-                                class="mt-8"
-                                tabindex="3"
-                            >{{ "login" | translate }}</v-btn>
+                            <v-btn color="tertiary" large block @click.stop="onLogin" elevation="0" class="mt-8" tabindex="3">
+                                {{ "login" | translate }}
+                            </v-btn>
+
                             <v-alert
                                 type="error"
                                 border="left"
@@ -68,7 +60,9 @@
                                 elevation="0"
                                 light
                                 :value="showErrorMessage"
-                            >{{'login-failed'|translate}}</v-alert>
+                            >
+                                {{ "login-failed" | translate }}
+                            </v-alert>
                         </v-form>
                     </v-card-text>
                 </v-card>
@@ -95,8 +89,11 @@ export default {
                 if (!result) this.showErrorMessage = true;
             });
         },
+        /**
+         * @param {KeyboardEvent} event
+         */
         checkIfCapsLockIsOn(event) {
-            if (event.getModifierState("CapsLock")) {
+            if (event.getModifierState && event.getModifierState("CapsLock")) {
                 this.showAlertCapsLock = true;
             }
             else this.showAlertCapsLock = false;

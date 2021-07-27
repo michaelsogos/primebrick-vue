@@ -149,22 +149,69 @@
 
                 <template v-slot:[`item.actions`]="{ item }">
                     <div class="actionsCell">
-                        <v-icon v-if="checkRowButtonVisibility('open')" small class="mr-2" color="primary" @click.stop="onOpenItem(item)">
+                        <v-icon
+                            v-if="checkRowButtonVisibility('open')"
+                            :small="!getRowButtonDenseSize()"
+                            :dense="getRowButtonDenseSize()"
+                            class="mr-2"
+                            color="primary"
+                            @click.stop="onOpenItem(item)"
+                        >
                             mdi-eye
                         </v-icon>
-                        <v-icon v-if="checkRowButtonVisibility('edit')" small color="primary" class="mr-2" @click.stop="onEditItem(item)">
+                        <v-icon
+                            v-if="checkRowButtonVisibility('edit')"
+                            :small="!getRowButtonDenseSize()"
+                            :dense="getRowButtonDenseSize()"
+                            color="primary"
+                            class="mr-2"
+                            @click.stop="onEditItem(item)"
+                        >
                             mdi-pencil
                         </v-icon>
-                        <v-icon v-if="checkRowButtonVisibility('delete')" small class="mr-2" color="error" @click="onDeleteItem(item)">
+                        <v-icon
+                            v-if="checkRowButtonVisibility('delete')"
+                            :small="!getRowButtonDenseSize()"
+                            :dense="getRowButtonDenseSize()"
+                            class="mr-2"
+                            color="error"
+                            @click="onDeleteItem(item)"
+                        >
                             mdi-delete-alert
                         </v-icon>
-                        <v-icon v-if="checkRowButtonVisibility('archive')" small class="mr-2" color="error" @click="onArchiveItem(item)">
+                        <v-icon
+                            v-if="checkRowButtonVisibility('archive')"
+                            :small="!getRowButtonDenseSize()"
+                            :dense="getRowButtonDenseSize()"
+                            class="mr-2"
+                            color="error"
+                            @click="onArchiveItem(item)"
+                        >
                             mdi-trash-can
                         </v-icon>
                     </div>
                 </template>
             </v-data-table>
         </h-panel>
+        <v-snackbar v-model="showRecordRecoverSnackbar" :timeout="5000" centered color="info" elevation="24" vertical>
+            <v-progress-linear
+                v-model="recordRecoverSnackbarCountdown"
+                :active="showRecordRecoverSnackbar"
+                absolute
+                top
+                light
+                color="info darken-3"
+            ></v-progress-linear>
+            {{ "cancel-delete-operation-message" | translate }}
+            <template v-slot:action="{ attrs }">
+                <v-btn text v-bind="attrs" @click="showRecordRecoverSnackbar = false">
+                    {{ "no" | translate }}
+                </v-btn>
+                <v-btn text v-bind="attrs" @click="onRecoverDeleteRecord">
+                    {{ "yes" | translate }}
+                </v-btn>
+            </template>
+        </v-snackbar>
     </v-container>
 </template>
 
@@ -177,6 +224,7 @@ import { OpenView } from 'src/models/OpenView';
 import { ConfirmDialog } from '../../models/ConfirmDialog';
 import { StringUtils } from "../../common/StringUtils";
 import { DeleteEntity } from '../../models/DeleteEntity';
+import { SaveEntity } from '../../models/SaveEntity';
 
 export default {
     name: "view-grid",
@@ -210,7 +258,11 @@ export default {
                     text: this.$options.filters.translate("ends-with"),
                     value: "ENDSWITH"
                 }
-            ]
+            ],
+            recoverableRecord: null,
+            recordRecoverSnackbarTimeout: 5000,
+            recordRecoverSnackbarCountdown: 0,
+            showRecordRecoverSnackbar: false
         };
     },
     computed: {
@@ -376,9 +428,26 @@ export default {
         async deleteItem(item) {
             const result = await this.$store.dispatch($.actions.APP_DELETE_ENTITY, new DeleteEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
             if (result) {
-                console.log(result);
-                alert("Restore delete record ?");
+                this.recoverableRecord = result;
+                this.runRecordRecoverSnackbar();
             }
+            this.loadData();
+        },
+        runRecordRecoverSnackbar() {
+            this.recordRecoverSnackbarCountdown = 0;
+            const progressBarStep = 100 / ((this.recordRecoverSnackbarTimeout - 1000) / 1000);
+            const interval = setInterval(() => {
+                if (this.recordRecoverSnackbarCountdown >= 100) {
+                    clearInterval(interval);
+                    return;
+                }
+                this.recordRecoverSnackbarCountdown += progressBarStep;
+            }, 1000);
+            this.showRecordRecoverSnackbar = true;
+        },
+        async onRecoverDeleteRecord() {
+            this.showRecordRecoverSnackbar = false;
+            await this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.brick, this.viewDefinition.entity, this.recoverableRecord));
             this.loadData();
         },
         onDeleteItems() {
@@ -478,6 +547,14 @@ export default {
 
 
             this.loadData();
+        },
+        getRowButtonDenseSize() {
+            let count = 0;
+            for (const action in this.view.actions)
+                if (this.view.actions[action].enableRowButton == true)
+                    count += 1;
+
+            return count > 3 ? false : true;
         },
         /** @returns {Boolean} */
         checkRowButtonVisibility(/** @type {string} */ actionName) {
