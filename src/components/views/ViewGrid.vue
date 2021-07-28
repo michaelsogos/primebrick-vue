@@ -225,6 +225,7 @@ import { ConfirmDialog } from '../../models/ConfirmDialog';
 import { StringUtils } from "../../common/StringUtils";
 import { DeleteEntity } from '../../models/DeleteEntity';
 import { SaveEntity } from '../../models/SaveEntity';
+import { DeleteEntities } from "../../models/DeleteEntities";
 
 export default {
     name: "view-grid",
@@ -241,6 +242,7 @@ export default {
             viewDataPageNumber: 1,
             viewDataSortFields: [],
             viewDataSortDirections: [],
+            /** @type {import("../../models/UnknownEntity").UnknownEntity[]} */
             viewSelectedRows: [],
             viewSearchTerm: null,
             /** @type {ViewFilterField[]} */
@@ -431,7 +433,7 @@ export default {
                 this.recoverableRecord = result;
                 this.runRecordRecoverSnackbar();
             }
-            this.loadData();
+            this.onRefresh();
         },
         runRecordRecoverSnackbar() {
             this.recordRecoverSnackbarCountdown = 0;
@@ -448,7 +450,7 @@ export default {
         async onRecoverDeleteRecord() {
             this.showRecordRecoverSnackbar = false;
             await this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.brick, this.viewDefinition.entity, this.recoverableRecord));
-            this.loadData();
+            this.onRefresh();
         },
         onDeleteItems() {
             if (this.viewSelectedRows.length <= 0) {
@@ -470,8 +472,16 @@ export default {
                 dialog.message = this.$options.filters.translate("delete-entity-dialog-message", { entityName });
                 dialog.iconColor = "error";
                 dialog.icon = 'mdi-delete-alert';
+                dialog.yesButtonCallback = () => this.deleteItems(this.viewSelectedRows.map((r) => r.id));
                 this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
             }
+        },
+        /**
+         * @param {Number[]} ids
+         */
+        async deleteItems(ids) {            
+            await this.$store.dispatch($.actions.APP_DELETE_ENTITIES, new DeleteEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            this.onRefresh();
         },
         onArchiveItems() {
             alert(this.viewSelectedRows.join(","));

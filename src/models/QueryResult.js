@@ -1,8 +1,8 @@
 export class QueryResult {
-	constructor() {
-		/** @type {Array} */
-		this.data = [];
-		/** @type {Number} */
-		this.count = null;
-	}
+    constructor() {
+        /** @type {import("./UnknownEntity").UnknownEntity[]} */
+        this.data = [];
+        /** @type {Number} */
+        this.count = null;
+    }
 }

@@ -282,6 +282,21 @@ const store = new Vuex.Store({
                 alert(result.clientMessage);
             }
         },
+        /**
+         *
+         * @param {ActionContext<initialState>} context
+         * @param {import("../models/DeleteEntities").DeleteEntities} deleteEntities
+         */
+        async [$.actions.APP_DELETE_ENTITIES](context, deleteEntities) {
+            let result = await RestApiService.post($api.POST_DELETE_ENTITIES, deleteEntities);
+
+            if (!result.hasError) {
+                return result.response.count;
+            } else {
+                console.error(result.exception);
+                alert(result.clientMessage);
+            }
+        },
     },
     getters: {
         [$.getters.APP_GET_RECORDS]:
