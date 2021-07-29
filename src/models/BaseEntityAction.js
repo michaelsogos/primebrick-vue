@@ -1,16 +1,13 @@
-export class DeleteEntities {
+export class BaseEntityAction {
     /**
      *
      * @param {String} brickName
      * @param {String} entityName
-     * @param {Number[]} entityIds
      */
-    constructor(brickName, entityName, entityIds) {
+    constructor(brickName, entityName) {
         /** @type {String} */
         this.brickName = brickName;
         /** @type {String} */
         this.entityName = entityName;
-        /** @type {Number[]} */
-        this.entityIds = entityIds;
     }
 }

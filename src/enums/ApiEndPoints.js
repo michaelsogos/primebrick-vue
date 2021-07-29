@@ -11,6 +11,8 @@ const apiEndPoints = {
     POST_GET_RECORDINFO: "api/data/info",
     POST_DELETE_ENTITY: "api/data/delete",
     POST_DELETE_ENTITIES: "api/data/deleteMany",
+    POST_ARCHIVE_ENTITIES: "api/data/archiveMany",
+    POST_ARCHIVE_ENTITY: "api/data/archive",
 };
 
 export default apiEndPoints;

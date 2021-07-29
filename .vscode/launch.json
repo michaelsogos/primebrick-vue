@@ -32,13 +32,13 @@
             "disableNetworkCache": true,
             "smartStep": true,
             "sourceMapPathOverrides": {
-                "meteor://💻app/*": "${workspaceFolder}/*",
                 "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
-                "webpack://?:*/*": "${workspaceFolder}/*",
-                "webpack:///src/*": "${workspaceFolder}/src/*",
-                "webpack:///.src/*": "${workspaceFolder}/src/*"
+                "webpack:///src/*.vue": "${workspaceFolder}/src/*.vue",
+                "webpack:///./src/*.js": "${workspaceFolder}/src/*.js"
             },
-            "preLaunchTask": "npm: serve"
+            "preLaunchTask": "npm: serve",
+            "internalConsoleOptions": "openOnSessionStart",
+            "showAsyncStacks": true
         }
     ]
 }

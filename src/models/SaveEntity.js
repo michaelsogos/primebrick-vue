@@ -1,4 +1,6 @@
-export class SaveEntity {
+import { BaseEntityAction } from "./BaseEntityAction";
+
+export class SaveEntity extends BaseEntityAction {
     /**
      *
      * @param {String} brickName
@@ -6,10 +8,8 @@ export class SaveEntity {
      * @param {Any} entity
      */
     constructor(brickName, entityName, entity) {
-        /** @type {String} */
-        this.brickName = brickName;
-        /** @type {String} */
-        this.entityName = entityName;
+        super(brickName, entityName);
+
         /** @type {Any} */
         this.entity = entity;
     }

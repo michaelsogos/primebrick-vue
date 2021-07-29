@@ -175,7 +175,7 @@
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
                             color="error"
-                            @click="onDeleteItem(item)"
+                            @click.stop="onDeleteItem(item)"
                         >
                             mdi-delete-alert
                         </v-icon>
@@ -185,7 +185,7 @@
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
                             color="error"
-                            @click="onArchiveItem(item)"
+                            @click.stop="onArchiveItem(item)"
                         >
                             mdi-trash-can
                         </v-icon>
@@ -225,7 +225,8 @@ import { ConfirmDialog } from '../../models/ConfirmDialog';
 import { StringUtils } from "../../common/StringUtils";
 import { DeleteEntity } from '../../models/DeleteEntity';
 import { SaveEntity } from '../../models/SaveEntity';
-import { DeleteEntities } from "../../models/DeleteEntities";
+import { DeleteOrArchiveEntities } from "../../models/DeleteOrArchiveEntities";
+import { ArchiveEntity } from '../../models/ArchiveEntity';
 
 export default {
     name: "view-grid",
@@ -479,15 +480,53 @@ export default {
         /**
          * @param {Number[]} ids
          */
-        async deleteItems(ids) {            
-            await this.$store.dispatch($.actions.APP_DELETE_ENTITIES, new DeleteEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+        async deleteItems(ids) {
+            await this.$store.dispatch($.actions.APP_DELETE_ENTITIES, new DeleteOrArchiveEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
             this.onRefresh();
         },
         onArchiveItems() {
-            alert(this.viewSelectedRows.join(","));
+            if (this.viewSelectedRows.length <= 0) {
+                const dialog = new ConfirmDialog(true);
+                dialog.title = this.$options.filters.translate("invalid-action");
+                dialog.message = this.$options.filters.translate("no-rows-selected");
+                dialog.iconColor = "warning";
+                dialog.icon = 'mdi-exclamation-thick';
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
+            else if (this.viewSelectedRows.length == 1) {
+                this.onArchiveItem(this.viewSelectedRows[0]);
+            }
+            else {
+                const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+                const dialog = new ConfirmDialog();
+                dialog.title = this.$options.filters.translate("archive-entity-dialog-title", { entityName });
+                dialog.subTitle = `${this.$options.filters.translate("selected-records")}: ${this.viewSelectedRows.length}`;
+                dialog.message = this.$options.filters.translate("archive-entity-dialog-message", { entityName });
+                dialog.iconColor = "error";
+                dialog.icon = 'mdi-trash-can';
+                dialog.yesButtonCallback = () => this.archiveItems(this.viewSelectedRows.map((r) => r.id));
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
         },
         onArchiveItem(item) {
-            alert(item.id);
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+            const dialog = new ConfirmDialog();
+            dialog.title = this.$options.filters.translate("archive-entity-dialog-title", { entityName });
+            dialog.subTitle = recordName || `${this.$options.filters.translate("record")} id: ${item.id}`;
+            dialog.message = this.$options.filters.translate("archive-entity-dialog-message", { entityName });
+            dialog.iconColor = "error";
+            dialog.icon = 'mdi-trash-can';
+            dialog.yesButtonCallback = () => this.archiveItem(item);
+            this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+        },
+        async archiveItem(item) {
+            await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITY, new ArchiveEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
+            this.onRefresh();
+        },
+        async archiveItems(ids) {
+            await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITIES, new DeleteOrArchiveEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            this.onRefresh();
         },
         onDoubleClickRow(/** @type {Event}*/event, row) {
             event.stopPropagation();

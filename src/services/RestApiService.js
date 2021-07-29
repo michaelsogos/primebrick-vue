@@ -69,7 +69,8 @@ export class RestApiService {
 		let headers = prepareHttpHeader();
 
 		try {
-			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers }).catch((err) => {
+			let result = await axios.post(`${config.restApiEndpoint}/${endpoint}`, data, { headers: headers })
+			.catch((err) => {
 				if (err.response && err.response.status >= 400) {
 					err.message = err.response.data.message;
 					throw err;

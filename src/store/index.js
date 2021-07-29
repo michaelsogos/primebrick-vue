@@ -285,13 +285,43 @@ const store = new Vuex.Store({
         /**
          *
          * @param {ActionContext<initialState>} context
-         * @param {import("../models/DeleteEntities").DeleteEntities} deleteEntities
+         * @param {import("../models/DeleteOrArchiveEntities").DeleteOrArchiveEntities} deleteEntities
          */
         async [$.actions.APP_DELETE_ENTITIES](context, deleteEntities) {
             let result = await RestApiService.post($api.POST_DELETE_ENTITIES, deleteEntities);
 
             if (!result.hasError) {
                 return result.response.count;
+            } else {
+                console.error(result.exception);
+                alert(result.clientMessage);
+            }
+        },
+        /**
+         *
+         * @param {ActionContext<initialState>} context
+         * @param {import("../models/ArchiveEntity").ArchiveEntity} archiveEntity
+         */
+        async [$.actions.APP_ARCHIVE_ENTITY](context, archiveEntity) {
+            let result = await RestApiService.post($api.POST_ARCHIVE_ENTITY, archiveEntity);
+
+            if (!result.hasError) {
+                return result.response.data.length == 1 ? result.response.data[0] : null;
+            } else {
+                console.error(result.exception);
+                alert(result.clientMessage);
+            }
+        },
+        /**
+         *
+         * @param {ActionContext<initialState>} context
+         * @param {import("../models/DeleteOrArchiveEntities").DeleteOrArchiveEntities} archiveEntities
+         */
+        async [$.actions.APP_ARCHIVE_ENTITIES](context, archiveEntities) {
+            let result = await RestApiService.post($api.POST_ARCHIVE_ENTITIES, archiveEntities);
+
+            if (!result.hasError) {
+                return result.response.data.length >= 1 ? result.response.data : [];
             } else {
                 console.error(result.exception);
                 alert(result.clientMessage);
