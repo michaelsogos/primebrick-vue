@@ -1,23 +1,14 @@
 <template>
     <div>
-        <v-list-item
-            @click="onClickItem"
-            :input-value="expand"
-            class="my-0"
-            :style="nodeStyle()"
-        >
+        <v-list-item @click="onClickItem" :input-value="expand" class="my-0" :style="nodeStyle()">
             <v-list-item-icon>
                 <v-icon dark :small="isSubTree()">{{ nodeItem.icon }}</v-icon>
             </v-list-item-icon>
             <v-list-item-title class="font-weight-regular">
                 <span>{{ nodeItem.labelKey | translate }}</span>
             </v-list-item-title>
-            <v-list-item-action
-                v-if="nodeItem.children && nodeItem.children.length"
-            >
-                <v-icon small dark :class="[expand ? 'mdi-rotate-180' : '']"
-                    >mdi-chevron-down</v-icon
-                >
+            <v-list-item-action v-if="nodeItem.children && nodeItem.children.length">
+                <v-icon small dark :class="[expand ? 'mdi-rotate-180' : '']">mdi-chevron-down</v-icon>
             </v-list-item-action>
         </v-list-item>
 
@@ -29,11 +20,7 @@
             class="my-0 primary darken-1"
             :style="nodeListStyle()"
         >
-            <h-nav-tree-item
-                v-for="item in nodeItem.children"
-                :node="item"
-                :key="`${item.labelKey}_${item.orderPriority}`"
-            ></h-nav-tree-item>
+            <h-nav-tree-item v-for="item in nodeItem.children" :node="item" :key="`${item.labelKey}_${item.orderPriority}`"></h-nav-tree-item>
         </v-list>
     </div>
 </template>
@@ -60,7 +47,8 @@ export default {
     },
     methods: {
         onClickItem() {
-            if (this.nodeItem.viewName) {
+
+            if ((!this.nodeItem.children || this.nodeItem.children.length <= 0) && this.nodeItem.viewName) {
                 this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromMenuItem(this.nodeItem));
             }
             else
