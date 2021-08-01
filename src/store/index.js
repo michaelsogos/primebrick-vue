@@ -37,6 +37,8 @@ const initialState = {
             /** @type {import("../models/ConfirmDialog").ConfirmDialog} */
             confirmDialog: null,
         },
+        /** @type {import("../models/AppLog").AppLog[]} */
+        logs: [],
     },
 };
 
@@ -142,6 +144,16 @@ const store = new Vuex.Store({
          */
         [$.mutations.APP_HIDE_CONFIRMDIALOG](state) {
             state.app.ui.confirmDialog.show = false;
+        },
+        /**
+         *
+         * @param {initialState} state
+         * @param  {import("../models/AppLog").AppLog} appLog
+         */
+        [$.mutations.APP_ADD_LOGENTRY](state, appLog) {
+            state.app.logs.unshift(appLog);
+
+            if (state.app.logs.length > 10) state.app.logs.splice(10);
         },
     },
     actions: {

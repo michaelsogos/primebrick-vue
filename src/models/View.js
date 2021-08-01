@@ -39,6 +39,8 @@ export class ViewDefinition {
         this.entityNameTemplate = null;
         /** @type {String[]} */
         this.perms = [];
+        /** @type {String} */
+        this.showArchivedEntities = null;
     }
 }
 

@@ -22,6 +22,9 @@ Vue.component(UIViewToolbar.name, UIViewToolbar);
 import UIConfirmDialog from "../components/ui/ConfirmDialog.vue";
 Vue.component(UIConfirmDialog.name, UIConfirmDialog);
 
+import UIViewLog from "../components/ui/ViewLog.vue";
+Vue.component(UIViewLog.name, UIViewLog);
+
 //* Register Views *//
 //--------------------------//
 import ViewCards from "../components/views/ViewCards.vue";

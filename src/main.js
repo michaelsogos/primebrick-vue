@@ -8,6 +8,7 @@ import vuetify from "./plugins/vuetify";
 // import "@mdi/font/css/materialdesignicons.css";
 import "./assets/styles/index.scss";
 import "./plugins/componentRegister";
+import "./plugins/appLogger";
 
 import translate from "./plugins/filters/translate";
 Vue.filter(translate.name, translate.filter);

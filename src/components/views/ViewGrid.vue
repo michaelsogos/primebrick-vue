@@ -9,11 +9,10 @@
                     @archive="onArchiveItems"
                     @refresh="onRefresh"
                     @search="onSearch"
+                    @show-archived="onShowArchived"
                 ></h-view-toolbar>
             </template>
-            <template v-slot:footer>
-                <div></div>
-            </template>
+
             <v-btn
                 :color="view.color || 'tertiary'"
                 fab
@@ -192,6 +191,10 @@
                     </div>
                 </template>
             </v-data-table>
+
+            <template v-slot:footer>
+                <h-view-log></h-view-log>
+            </template>
         </h-panel>
         <v-snackbar v-model="showRecordRecoverSnackbar" :timeout="5000" centered color="info" elevation="24" vertical>
             <v-progress-linear
@@ -265,7 +268,7 @@ export default {
             recoverableRecord: null,
             recordRecoverSnackbarTimeout: 5000,
             recordRecoverSnackbarCountdown: 0,
-            showRecordRecoverSnackbar: false
+            showRecordRecoverSnackbar: false,
         };
     },
     computed: {
@@ -393,6 +396,10 @@ export default {
             this.viewDataSortDirections = [];
             this.viewSelectedRows = [];
             this.loadData();
+        },
+        onShowArchived(/** @type {String} */ option) {
+            this.viewDefinition.showArchivedEntities = option;
+            this.onRefresh();
         },
         onSortField(/** @type {String[] } */ sortFields) {
             this.viewDataSortFields.splice(0);
@@ -644,6 +651,7 @@ export default {
             query.entity = this.viewDefinition.entity;
             query.fields = this.viewDefinition.fields.map(item => { return item.name; });
             query.filters = Array.from(this.viewDefinition.filters);
+            query.showArchivedEntities = this.viewDefinition.showArchivedEntities;
             query.take = 50;
             query.skip = (this.viewDataPageNumber - 1) * 50;
 
@@ -690,6 +698,10 @@ export default {
 
             this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
             this.viewDataLoading = false;
+            window.logger.debug("dfd");
+            window.logger.info("dfd");
+            window.logger.warn("dfd");
+            window.logger.error("dfd");
         },
     },
     mounted() {

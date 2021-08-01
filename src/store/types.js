@@ -30,5 +30,6 @@ module.exports = {
         APP_ADD_TRANSLATIONS: "mutationAppAddTranslations",
         APP_SHOW_CONFIRMDIALOG: "mutationAppShowConfirmDialog",
         APP_HIDE_CONFIRMDIALOG: "mutationAppHideConfirmDialog",
+        APP_ADD_LOGENTRY: "mutationAppAddLogEntry",
     },
 };

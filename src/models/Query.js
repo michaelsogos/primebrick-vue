@@ -9,6 +9,8 @@ export class Query {
         this.entity = null;
         /** @type {String[]} */
         this.fields = [];
+        /** @type {String} */
+        this.showArchivedEntities = null;
         /** @type {ViewFilter[]} */
         this.filters = [];
         /** @type {ViewSort[]} */

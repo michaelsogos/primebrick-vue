@@ -27,15 +27,33 @@
             <v-icon left>mdi-trash-can</v-icon>
             {{ "archive" | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" @click="$emit('refresh')" v-if="checkToolbarButtonVisibility('refresh')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('refresh')" @click="$emit('refresh')">
             <v-icon left>mdi-refresh</v-icon>
             {{ "refresh" | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" @click="$emit('info')" v-if="checkToolbarButtonVisibility('info')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('info')" @click="$emit('info')">
             <v-icon left>mdi-information-variant</v-icon>
             {{ "information" | translate }}
         </v-btn>
         <v-spacer></v-spacer>
+        <v-select
+            v-if="checkToolbarButtonVisibility('showArchived')"
+            hide-details
+            solo
+            flat
+            dense
+            :items="showArchivedOptions"
+            v-model="showArchivedSelectedOption"
+            @change="onShowArchived"
+            :background-color="`${computeColor(view.color)} lighten-4`"
+            style="max-width: 200px"
+            color="primary"
+            class="mx-1 caption"
+        >
+            <template v-slot:prepend-inner>
+                <v-icon size="18">mdi-trash-can</v-icon>
+            </template>
+        </v-select>
         <v-text-field
             solo
             single-line
@@ -44,16 +62,21 @@
             clearable
             @click.stop
             hide-details
-            prepend-inner-icon="mdi-magnify"
             :label="'search' | translate"
             color="primary"
             :background-color="`${computeColor(view.color)} lighten-4`"
             type="search"
-            style="max-width: 400px"
+            style="max-width: 300px"
+            class="mx-1 caption"
             @change="$emit('search', viewSearchTerm)"
             v-model="viewSearchTerm"
             v-if="checkToolbarButtonVisibility('search')"
-        ></v-text-field>
+        >
+            <template v-slot:prepend-inner>
+                <v-icon size="18">mdi-magnify</v-icon>
+            </template>
+        </v-text-field>
+        <v-spacer></v-spacer>
         <v-btn-toggle
             v-if="view.alternativeViews && view.alternativeViews.length > 0"
             :value="0"
@@ -99,18 +122,32 @@ import { View } from 'src/models/View';
 export default {
     name: "h-view-toolbar",
     props: {
-        view: Object,
+        view: View,
     },
     data: function () {
         return {
             viewSearchTerm: null,
+            showArchivedOptions: [
+                {
+                    text: this.$options.filters.translate('do-not-show-archived'),
+                    value: 'none'
+                },
+                {
+                    text: this.$options.filters.translate('show-also-archived'),
+                    value: 'also'
+                },
+                {
+                    text: this.$options.filters.translate('show-only-archived'),
+                    value: 'only'
+                }
+            ],
+            showArchivedSelectedOption: 'none'
         };
     },
     methods: {
         onAddItem() {
-            /** @type {View} */
-            const thisView = this.view;
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(thisView, thisView.actions.add.view, null));
+
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.add.view, null));
         },
         onOpenLink(/** @type {{ labelKey: String, view: String, action: String, icon: String }} */link) {
             switch (link.action) {
@@ -137,6 +174,9 @@ export default {
                     break;
             }
         },
+        onShowArchived() {
+            this.$emit('show-archived', this.showArchivedSelectedOption);
+        },
         /** @returns {String} */
         computeColor(/** @type {String} */ color) {
             if (!color) return "tertiary";
@@ -153,12 +193,10 @@ export default {
         },
         /** @returns {Boolean} */
         checkToolbarButtonVisibility(/** @type {string} */ actionName) {
-            /** @type {View} */
-            const thisView = this.view;
-            if (actionName == "save" && thisView.readonly) return false;
-            if (actionName == "edit" && thisView.readonly) return thisView.actions && thisView.actions.save && thisView.actions.save.enableToolbarButton == true;
+            if (actionName == "save" && this.view.readonly) return false;
+            if (actionName == "edit" && this.view.readonly) return this.view.actions && this.view.actions.save && this.view.actions.save.enableToolbarButton == true;
 
-            return thisView.actions && thisView.actions[actionName] && thisView.actions[actionName].enableToolbarButton == true;
+            return this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableToolbarButton == true;
         },
         /** @returns {String} */
         getViewIcon(/** @type {string} */ viewType) {
@@ -177,12 +215,9 @@ export default {
         },
         /** @returns {Boolean} */
         checkMenuVisibility() {
-            /** @type {View} */
-            const thisView = this.view;
-
             let showMenu = false;
-            for (const action in thisView.actions) {
-                if (thisView.actions[action].enableMenuLink == true) {
+            for (const action in this.view.actions) {
+                if (this.view.actions[action].enableMenuLink == true) {
                     showMenu = true;
                     break;
                 }
@@ -192,22 +227,19 @@ export default {
         },
         /** @returns {{ labelKey: String, view: String, action: String, icon: String }[]} */
         getMenuLink() {
-            /** @type {View} */
-            const thisView = this.view;
-
             const links = [];
-            for (const action in thisView.actions) {
+            for (const action in this.view.actions) {
                 if (action == "save") {
                     let realAction = action;
-                    if (thisView.readonly) realAction = 'edit';
-                    if (thisView.actions.save.enableMenuLink == true) {
+                    if (this.view.readonly) realAction = 'edit';
+                    if (this.view.actions.save.enableMenuLink == true) {
                         links.push({ labelKey: realAction, view: null, action: realAction, icon: this.getActionIcon(realAction) });
                     }
                     continue;
                 }
 
-                if (thisView.actions[action].enableMenuLink == true) {
-                    links.push({ labelKey: action == "add" ? "new" : action, view: thisView.actions[action].view, action: action, icon: this.getActionIcon(action) });
+                if (this.view.actions[action].enableMenuLink == true) {
+                    links.push({ labelKey: action == "add" ? "new" : action, view: this.view.actions[action].view, action: action, icon: this.getActionIcon(action) });
                 }
             }
 
