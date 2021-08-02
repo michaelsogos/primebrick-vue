@@ -10,6 +10,7 @@
                     @refresh="onRefresh"
                     @search="onSearch"
                     @show-archived="onShowArchived"
+                    @restore="onRestoreItems"
                 ></h-view-toolbar>
             </template>
 
@@ -149,7 +150,7 @@
                 <template v-slot:[`item.actions`]="{ item }">
                     <div class="actionsCell">
                         <v-icon
-                            v-if="checkRowButtonVisibility('open')"
+                            v-if="checkRowButtonVisibility(ViewAction.OPEN, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -159,7 +160,7 @@
                             mdi-eye
                         </v-icon>
                         <v-icon
-                            v-if="checkRowButtonVisibility('edit')"
+                            v-if="checkRowButtonVisibility(ViewAction.EDIT, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             color="primary"
@@ -169,7 +170,7 @@
                             mdi-pencil
                         </v-icon>
                         <v-icon
-                            v-if="checkRowButtonVisibility('delete')"
+                            v-if="checkRowButtonVisibility(ViewAction.DELETE, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -179,7 +180,7 @@
                             mdi-delete-alert
                         </v-icon>
                         <v-icon
-                            v-if="checkRowButtonVisibility('archive')"
+                            v-if="checkRowButtonVisibility(ViewAction.ARCHIVE, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -188,12 +189,23 @@
                         >
                             mdi-trash-can
                         </v-icon>
+                        <v-icon
+                            v-if="checkRowButtonVisibility(ViewAction.RESTORE, item)"
+                            :small="!getRowButtonDenseSize()"
+                            :dense="getRowButtonDenseSize()"
+                            class="mr-2"
+                            color="primary"
+                            @click.stop="onRestoreItem(item)"
+                        >
+                            mdi-restore
+                        </v-icon>
                     </div>
                 </template>
             </v-data-table>
 
             <template v-slot:footer>
-                <h-view-log></h-view-log>
+                <h-view-log v-if="view.options.showLogs"></h-view-log>
+                <div v-else></div>
             </template>
         </h-panel>
         <v-snackbar v-model="showRecordRecoverSnackbar" :timeout="5000" centered color="info" elevation="24" vertical>
@@ -228,8 +240,9 @@ import { ConfirmDialog } from '../../models/ConfirmDialog';
 import { StringUtils } from "../../common/StringUtils";
 import { DeleteEntity } from '../../models/DeleteEntity';
 import { SaveEntity } from '../../models/SaveEntity';
-import { DeleteOrArchiveEntities } from "../../models/DeleteOrArchiveEntities";
-import { ArchiveEntity } from '../../models/ArchiveEntity';
+import { DeleteOrArchiveOrRestoreEntities } from "../../models/DeleteOrArchiveOrRestoreEntities";
+import { ArchiveOrRestoreEntity } from '../../models/ArchiveOrRestoreEntity';
+import { ViewAction } from "../../enums/ViewAction";
 
 export default {
     name: "view-grid",
@@ -269,6 +282,7 @@ export default {
             recordRecoverSnackbarTimeout: 5000,
             recordRecoverSnackbarCountdown: 0,
             showRecordRecoverSnackbar: false,
+            ViewAction
         };
     },
     computed: {
@@ -276,13 +290,16 @@ export default {
         gridHeaders() {
             if (!this.view) return [];
 
-            let headers = this.viewDefinition.fields.map(item => {
+            const headers = [];
+            for (const item of this.viewDefinition.fields) {
+                if (item.hideColumn == true) continue;
+
                 let filter = null;
                 if (this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true) {
                     filter = this.view.actions.filter.fields.find((f) => f.field == item.name);
                 }
 
-                return {
+                headers.push({
                     text: this.$options.filters.translate(item.labelKey),
                     value: item.name,
                     type: item.type || 'string',
@@ -297,8 +314,8 @@ export default {
                         }
                     })(),
                     columnFilter: filter
-                };
-            });
+                });
+            }
 
             let actionButtonsCount = 0;
             for (const action in this.view.actions) {
@@ -382,7 +399,6 @@ export default {
             }
 
             return records;
-            // return this.viewData.data;
         },
     },
     methods: {
@@ -436,11 +452,14 @@ export default {
             this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
         },
         async deleteItem(item) {
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            /** @type {import("../../models/QueryResult").QueryResult} */
             const result = await this.$store.dispatch($.actions.APP_DELETE_ENTITY, new DeleteEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
             if (result) {
-                this.recoverableRecord = result;
+                this.recoverableRecord = result.data[0];
                 this.runRecordRecoverSnackbar();
             }
+            window.logger.info(this.$options.filters.translate("entity-deleted-message", { entityName: recordName }));
             this.onRefresh();
         },
         runRecordRecoverSnackbar() {
@@ -488,8 +507,11 @@ export default {
          * @param {Number[]} ids
          */
         async deleteItems(ids) {
-            await this.$store.dispatch($.actions.APP_DELETE_ENTITIES, new DeleteOrArchiveEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            /** @type {import("../../models/QueryResult").QueryResult} */
+            const result = await this.$store.dispatch($.actions.APP_DELETE_ENTITIES, new DeleteOrArchiveOrRestoreEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            window.logger.info(this.$options.filters.translate("entities-deleted-message", { count: result.count }));
             this.onRefresh();
+
         },
         onArchiveItems() {
             if (this.viewSelectedRows.length <= 0) {
@@ -528,11 +550,69 @@ export default {
             this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
         },
         async archiveItem(item) {
-            await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITY, new ArchiveEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITY, new ArchiveOrRestoreEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
+            window.logger.info(this.$options.filters.translate("entity-archived-message", { entityName: recordName }));
             this.onRefresh();
         },
+        /**
+         * @param {Number[]} ids
+         */
         async archiveItems(ids) {
-            await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITIES, new DeleteOrArchiveEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            /** @type {import("../../models/QueryResult").QueryResult} */
+            const result = await this.$store.dispatch($.actions.APP_ARCHIVE_ENTITIES, new DeleteOrArchiveOrRestoreEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            window.logger.info(this.$options.filters.translate("entities-archived-message", { count: result.count }));
+            this.onRefresh();
+        },
+        onRestoreItem(item) {
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+            const dialog = new ConfirmDialog();
+            dialog.title = this.$options.filters.translate("restore-entity-dialog-title", { entityName });
+            dialog.subTitle = recordName || `${this.$options.filters.translate("record")} id: ${item.id}`;
+            dialog.message = this.$options.filters.translate("restore-entity-dialog-message", { entityName });
+            dialog.iconColor = "success";
+            dialog.icon = 'mdi-restore';
+            dialog.yesButtonCallback = () => this.restoreItem(item);
+            this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+        },
+        async restoreItem(item) {
+            const recordName = StringUtils.buildEntityName(this.viewDefinition.entityNameTemplate, item);
+            await this.$store.dispatch($.actions.APP_RESTORE_ENTITY, new ArchiveOrRestoreEntity(this.viewDefinition.brick, this.viewDefinition.entity, item.id));
+            window.logger.info(this.$options.filters.translate("entity-restored-message", { entityName: recordName }));
+            this.onRefresh();
+        },
+        onRestoreItems() {
+            if (this.viewSelectedRows.length <= 0) {
+                const dialog = new ConfirmDialog(true);
+                dialog.title = this.$options.filters.translate("invalid-action");
+                dialog.message = this.$options.filters.translate("no-rows-selected");
+                dialog.iconColor = "warning";
+                dialog.icon = 'mdi-exclamation-thick';
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
+            else if (this.viewSelectedRows.length == 1) {
+                this.onRestoreItem(this.viewSelectedRows[0]);
+            }
+            else {
+                const entityName = this.$options.filters.translate(this.view.entityNameLabelKey);
+                const dialog = new ConfirmDialog();
+                dialog.title = this.$options.filters.translate("restore-entity-dialog-title", { entityName });
+                dialog.subTitle = `${this.$options.filters.translate("selected-records")}: ${this.viewSelectedRows.length}`;
+                dialog.message = this.$options.filters.translate("restore-entity-dialog-message", { entityName });
+                dialog.iconColor = "success";
+                dialog.icon = 'mdi-restore';
+                dialog.yesButtonCallback = () => this.restoreItems(this.viewSelectedRows.map((r) => r.id));
+                this.$store.commit($.mutations.APP_SHOW_CONFIRMDIALOG, dialog);
+            }
+        },
+        /**
+         * @param {Number[]} ids
+         */
+        async restoreItems(ids) {
+            /** @type {import("../../models/QueryResult").QueryResult} */
+            const result = await this.$store.dispatch($.actions.APP_RESTORE_ENTITIES, new DeleteOrArchiveOrRestoreEntities(this.viewDefinition.brick, this.viewDefinition.entity, ids));
+            window.logger.info(this.$options.filters.translate("entities-restored-message", { count: result.count }));
             this.onRefresh();
         },
         onDoubleClickRow(/** @type {Event}*/event, row) {
@@ -613,8 +693,24 @@ export default {
             return count > 3 ? false : true;
         },
         /** @returns {Boolean} */
-        checkRowButtonVisibility(/** @type {string} */ actionName) {
-            return this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableRowButton == true;
+        checkRowButtonVisibility(/** @type {string} */ actionName, item) {
+            const isVisible = this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableRowButton == true || false;
+            const archiveFlagFieldName = this.viewDefinition.fields.find((f) => { return f.isArchiveFlag; }).name;
+            const isItemArchived = archiveFlagFieldName ? item[archiveFlagFieldName] : false;
+
+            switch (actionName) {
+                case ViewAction.EDIT:
+                case ViewAction.DELETE:
+                case ViewAction.ARCHIVE: {
+                    return isVisible && !isItemArchived;
+                }
+                case ViewAction.RESTORE: {
+                    return isVisible && isItemArchived;
+                }
+                default:
+                    return isVisible;
+            }
+
         },
         checkColumnFiltersVisibility() {
             return this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true;
@@ -698,10 +794,6 @@ export default {
 
             this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
             this.viewDataLoading = false;
-            window.logger.debug("dfd");
-            window.logger.info("dfd");
-            window.logger.warn("dfd");
-            window.logger.error("dfd");
         },
     },
     mounted() {

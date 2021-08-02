@@ -109,6 +109,7 @@ export class StringUtils {
      *
      * @param {String} template
      * @param {any} record
+     * @returns {String}
      */
     static buildEntityName(template, record) {
         return template.interpolate(record);

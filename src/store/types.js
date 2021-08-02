@@ -10,6 +10,8 @@ module.exports = {
         APP_DELETE_ENTITIES: "actionAppDeleteEntities",
         APP_ARCHIVE_ENTITY: "actionAppArchiveEntity",
         APP_ARCHIVE_ENTITIES: "actionAppArchiveEntities",
+        APP_RESTORE_ENTITIES: "actionAppRestoreEntities",
+        APP_RESTORE_ENTITY: "actionAppRestoreEntity",
     },
     getters: {
         APP_GET_RECORDS: "getterAppGetRecords",

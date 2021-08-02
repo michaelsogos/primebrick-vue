@@ -85,6 +85,10 @@ export class ViewField {
         this.perms = [];
         /** @type {String} */
         this.type = null;
+        /** @type {Boolean} */
+        this.hideColumn = false;
+        /** @type {Boolean} */
+        this.isArchiveFlag = false;
     }
 }
 
@@ -243,6 +247,22 @@ export class ViewActions {
             /** @type {ViewFilterField[]} */
             fields: [],
         };
+
+        this.showArchived = {
+            /** @type {Boolean} */
+            enableToolbarButton: false,
+            /** @type {Boolean} */
+            enableMenuLink: false,
+        };
+
+        this.restore = {
+            /** @type {Boolean} */
+            enableToolbarButton: false,
+            /** @type {Boolean} */
+            enableRowButton: false,
+            /** @type {Boolean} */
+            enableMenuLink: false,
+        };
     }
 }
 
@@ -263,6 +283,8 @@ export class ViewOptions {
     constructor() {
         /** @type {Boolean} */
         this.enableMultiSelect = false;
+        /** @type {Boolean} */
+        this.showLogs = false;
     }
 }
 

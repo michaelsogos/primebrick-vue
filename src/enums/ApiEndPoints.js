@@ -13,6 +13,9 @@ const apiEndPoints = {
     POST_DELETE_ENTITIES: "api/data/deleteMany",
     POST_ARCHIVE_ENTITIES: "api/data/archiveMany",
     POST_ARCHIVE_ENTITY: "api/data/archive",
+    POST_RESTORE_ENTITY: "api/data/restore",
+    POST_RESTORE_ENTITIES: "api/data/restoreMany",
+
 };
 
 export default apiEndPoints;

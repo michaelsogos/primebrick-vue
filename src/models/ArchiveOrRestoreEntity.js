@@ -1,6 +1,6 @@
 import { BaseEntityAction } from "./BaseEntityAction";
 
-export class ArchiveEntity extends BaseEntityAction {
+export class ArchiveOrRestoreEntity extends BaseEntityAction {
     /**
      *
      * @param {String} brickName

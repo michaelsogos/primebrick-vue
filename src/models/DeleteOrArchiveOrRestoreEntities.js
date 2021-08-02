@@ -1,6 +1,6 @@
 import { BaseEntityAction } from "./BaseEntityAction";
 
-export class DeleteOrArchiveEntities extends BaseEntityAction {
+export class DeleteOrArchiveOrRestoreEntities extends BaseEntityAction {
     /**
      *
      * @param {String} brickName

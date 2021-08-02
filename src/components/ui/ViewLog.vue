@@ -1,25 +1,25 @@
 <template>
     <div>
         <v-btn v-if="showTable" text tile small @click.stop="showTable = !showTable">
-            <v-icon small class="mx-1">mdi-chevron-up</v-icon>
+            <v-icon small class="mx-1">mdi-chevron-down</v-icon>
             {{ "collapse" | translate }}
         </v-btn>
-        <v-simple-table dense>
+        <v-simple-table dense class="grey lighten-4">
             <template v-slot:default>
                 <tbody>
                     <template v-for="(log, index) in $store.state.app.logs">
                         <tr v-if="showTable || index == 0" :key="index">
                             <td v-if="!showTable" class="pa-0">
                                 <v-btn text tile small @click.stop="showTable = !showTable">
-                                    <v-icon small class="mx-1">mdi-chevron-down</v-icon>
+                                    <v-icon small class="mx-1">mdi-chevron-up</v-icon>
                                     {{ "show-more" | translate }}
                                 </v-btn>
                             </td>
                             <td>
                                 <v-icon :color="chipColor(log.severity)" dense>{{ chipIcon(log.severity) }}</v-icon>
                             </td>
-                            <td style="white-space: nowrap" class="grey--text">{{ log.raisedOn.toLocaleString() }}</td>
-                            <td style="width: 99%">{{ log.message }}</td>
+                            <td style="white-space: nowrap" class="grey--text caption">{{ log.raisedOn.toLocaleString() }}</td>
+                            <td style="width: 99%" class="caption">{{ log.message }}</td>
                         </tr>
                     </template>
                 </tbody>

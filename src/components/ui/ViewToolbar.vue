@@ -7,37 +7,41 @@
         height="46"
         :style="`border-bottom: 2px solid ${computeCssColor(view.color)} !important`"
     >
-        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('add')" @click="onAddItem">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.ADD)" @click="onAddItem">
             <v-icon left>mdi-plus</v-icon>
             {{ "new" | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('save')" @click="$emit('save')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.SAVE)" @click="$emit(ViewAction.SAVE)">
             <v-icon left>mdi-content-save</v-icon>
-            {{ "save" | translate }}
+            {{ ViewAction.SAVE | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('edit')" @click="$emit('edit')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.EDIT)" @click="$emit(ViewAction.EDIT)">
             <v-icon left>mdi-pencil</v-icon>
-            {{ "edit" | translate }}
+            {{ ViewAction.EDIT | translate }}
         </v-btn>
-        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility('delete')" @click="$emit('delete')">
+        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility(ViewAction.DELETE)" @click="$emit(ViewAction.DELETE)">
             <v-icon left>mdi-delete-alert</v-icon>
-            {{ "delete" | translate }}
+            {{ ViewAction.DELETE | translate }}
         </v-btn>
-        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility('archive')" @click="$emit('archive')">
+        <v-btn text tile class="caption error--text" v-if="checkToolbarButtonVisibility(ViewAction.ARCHIVE)" @click="$emit(ViewAction.ARCHIVE)">
             <v-icon left>mdi-trash-can</v-icon>
-            {{ "archive" | translate }}
+            {{ ViewAction.ARCHIVE | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('refresh')" @click="$emit('refresh')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.RESTORE)" @click="$emit(ViewAction.RESTORE)">
+            <v-icon left>mdi-restore</v-icon>
+            {{ ViewAction.RESTORE | translate }}
+        </v-btn>
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.REFRESH)" @click="$emit(ViewAction.REFRESH)">
             <v-icon left>mdi-refresh</v-icon>
-            {{ "refresh" | translate }}
+            {{ ViewAction.REFRESH | translate }}
         </v-btn>
-        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility('info')" @click="$emit('info')">
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.INFO)" @click="$emit(ViewAction.INFO)">
             <v-icon left>mdi-information-variant</v-icon>
             {{ "information" | translate }}
         </v-btn>
         <v-spacer></v-spacer>
         <v-select
-            v-if="checkToolbarButtonVisibility('showArchived')"
+            v-if="checkToolbarButtonVisibility(ViewAction.SHOW_ARCHIVED)"
             hide-details
             solo
             flat
@@ -70,7 +74,7 @@
             class="mx-1 caption"
             @change="$emit('search', viewSearchTerm)"
             v-model="viewSearchTerm"
-            v-if="checkToolbarButtonVisibility('search')"
+            v-if="checkToolbarButtonVisibility(ViewAction.SEARCH)"
         >
             <template v-slot:prepend-inner>
                 <v-icon size="18">mdi-magnify</v-icon>
@@ -118,6 +122,7 @@ import $ from "../../store/types";
 import { OpenView } from 'src/models/OpenView';
 // eslint-disable-next-line no-unused-vars
 import { View } from 'src/models/View';
+import { ViewAction } from "../../enums/ViewAction";
 
 export default {
     name: "h-view-toolbar",
@@ -141,36 +146,21 @@ export default {
                     value: 'only'
                 }
             ],
-            showArchivedSelectedOption: 'none'
+            showArchivedSelectedOption: this.view.definition.showArchivedEntities,
+            ViewAction
         };
     },
     methods: {
         onAddItem() {
-
             this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.add.view, null));
         },
         onOpenLink(/** @type {{ labelKey: String, view: String, action: String, icon: String }} */link) {
             switch (link.action) {
-                case "add":
+                case ViewAction.ADD:
                     this.onAddItem();
                     break;
-                case "delete":
-                    this.$emit('delete');
-                    break;
-                case "archive":
-                    this.$emit('archive');
-                    break;
-                case "refresh":
-                    this.$emit('refresh');
-                    break;
-                case "save":
-                    this.$emit('save');
-                    break;
-                case "edit":
-                    this.$emit('edit');
-                    break;
-                case "info":
-                    this.$emit('info');
+                default:
+                    this.$emit(link.action);
                     break;
             }
         },
@@ -239,7 +229,9 @@ export default {
                 }
 
                 if (this.view.actions[action].enableMenuLink == true) {
-                    links.push({ labelKey: action == "add" ? "new" : action, view: this.view.actions[action].view, action: action, icon: this.getActionIcon(action) });
+                    let labelKey = action;
+                    if (action == this.ViewAction.ADD) labelKey = "new";
+                    links.push({ labelKey, view: this.view.actions[action].view, action: action, icon: this.getActionIcon(action) });
                 }
             }
 
@@ -248,19 +240,21 @@ export default {
         /** @returns {String} */
         getActionIcon(/** @type {string} */ actionName) {
             switch (actionName) {
-                case "add":
+                case ViewAction.ADD:
                     return 'mdi-plus';
-                case "delete":
+                case ViewAction.DELETE:
                     return 'mdi-delete-alert';
-                case "archive":
+                case ViewAction.ARCHIVE:
                     return 'mdi-trash-can';
-                case "refresh":
+                case ViewAction.RESTORE:
+                    return 'mdi-restore';
+                case ViewAction.REFRESH:
                     return 'mdi-refresh';
-                case "save":
+                case ViewAction.SAVE:
                     return 'mdi-content-save';
-                case "edit":
+                case ViewAction.EDIT:
                     return 'mdi-pencil';
-                case "info":
+                case ViewAction.INFO:
                     return 'mdi-information-variant';
                 default:
                     return "";
