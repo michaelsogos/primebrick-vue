@@ -183,10 +183,25 @@ export default {
         },
         /** @returns {Boolean} */
         checkToolbarButtonVisibility(/** @type {string} */ actionName) {
-            if (actionName == "save" && this.view.readonly) return false;
-            if (actionName == "edit" && this.view.readonly) return this.view.actions && this.view.actions.save && this.view.actions.save.enableToolbarButton == true;
+            const isVisible = this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableToolbarButton == true;
 
-            return this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableToolbarButton == true;
+            switch (actionName) {
+                case ViewAction.SAVE:
+                    return !this.view.readonly && isVisible;
+                case ViewAction.EDIT: {
+                    const isSaveEnable = this.view.actions && this.view.actions.save && this.view.actions.save.enableToolbarButton == true;
+                    return this.view.readonly && isSaveEnable;
+                }
+                case ViewAction.DELETE:
+                case ViewAction.ARCHIVE: {
+                    return isVisible && this.view.definition.showArchivedEntities != 'only';
+                }
+                case ViewAction.RESTORE: {
+                    return isVisible && this.view.definition.showArchivedEntities != 'none';
+                }
+                default:
+                    return isVisible;
+            }
         },
         /** @returns {String} */
         getViewIcon(/** @type {string} */ viewType) {
@@ -219,22 +234,36 @@ export default {
         getMenuLink() {
             const links = [];
             for (const action in this.view.actions) {
-                if (action == "save") {
-                    let realAction = action;
-                    if (this.view.readonly) realAction = 'edit';
-                    if (this.view.actions.save.enableMenuLink == true) {
-                        links.push({ labelKey: realAction, view: null, action: realAction, icon: this.getActionIcon(realAction) });
-                    }
-                    continue;
-                }
+                let realAction = action;
+                let labelKey = action;
+                let view = this.view.actions[action].view;
 
                 if (this.view.actions[action].enableMenuLink == true) {
-                    let labelKey = action;
-                    if (action == this.ViewAction.ADD) labelKey = "new";
-                    links.push({ labelKey, view: this.view.actions[action].view, action: action, icon: this.getActionIcon(action) });
+                    switch (action) {
+                        case ViewAction.SAVE:
+                            if (this.view.readonly) {
+                                realAction = ViewAction.EDIT;
+                                labelKey = ViewAction.EDIT;
+                                view = null;
+                            }
+                            break;
+                        case ViewAction.ADD:
+                            labelKey = 'new';
+                            break;
+                        case ViewAction.EDIT:
+                            if (!this.view.actions.save || !this.view.actions.save.enableMenuLink) continue;
+                            break;
+                        case ViewAction.DELETE:
+                        case ViewAction.ARCHIVE: if (this.view.definition.showArchivedEntities == 'only') continue;
+                            break;
+                        case ViewAction.RESTORE:
+                            if (this.view.definition.showArchivedEntities == 'none') continue;
+                            break;
+                    }
+
+                    links.push({ labelKey, view, action: realAction, icon: this.getActionIcon(realAction) });
                 }
             }
-
             return links;
         },
         /** @returns {String} */

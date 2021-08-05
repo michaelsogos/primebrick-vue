@@ -273,9 +273,11 @@ export class ViewFilterField {
         /** @type {String} */
         this.type = null;
         /** @type {String} */
-        this.value = null;
+        this.selectedValue = null;
         /** @type {String} */
         this.operator = null;
+        /** @type {ViewFilterFieldListOptions} */
+        this.listOptions = null;
     }
 }
 
@@ -302,5 +304,23 @@ export class ViewHighlighters {
         this.fontStyle = null;
         /** @type {Boolean} */
         this.fontItalic = false;
+    }
+}
+
+export class ViewFilterFieldListOptions {
+    constructor() {
+        /** @type {Boolean} */
+        this.enableMultiSelection = null;
+        /** @type {ViewFilterFieldListValue[]} */
+        this.values = [];
+    }
+}
+
+export class ViewFilterFieldListValue {
+    constructor() {
+        /** @type {String} */
+        this.labelKey = null;
+        /** @type {any} */
+        this.value = null;
     }
 }

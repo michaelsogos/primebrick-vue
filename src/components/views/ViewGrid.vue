@@ -24,12 +24,12 @@
                 style="bottom: 50px"
                 @click="onAddItem()"
                 v-if="checkFabButtonVisibility()"
-                :title="this.$options.filters.translate('add-new-record')"
+                :title="$options.filters.translate('add-new-record')"
             >
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
             <v-data-table
-                :headers="gridHeaders"
+                :headers="viewGridColumns"
                 :items="gridRecords"
                 :items-per-page="50"
                 item-key="id"
@@ -54,92 +54,73 @@
                 :single-select="!getGridOption('enableMultiSelect')"
                 v-model="viewSelectedRows"
             >
-                <template v-slot:[`body.prepend`]="{ headers }">
-                    <tr class="v-data-table__empty-wrapper" v-if="checkColumnFiltersVisibility()">
-                        <td v-for="(item, idx) in headers" :key="idx" class="pa-0 ma-0">
-                            <template v-if="checkFilterFieldVisibility(item, 'string')">
-                                <v-row no-gutters>
-                                    <v-col cols="2">
-                                        <v-select
-                                            hide-details
-                                            solo
-                                            flat
-                                            dense
-                                            :ref="`filter-operator-${item.value}`"
-                                            :items="stringFilterOperators"
-                                            value="CONTAINS"
-                                            class="filter-input"
-                                            @change="onFilterField(item)"
-                                        ></v-select>
-                                    </v-col>
-                                    <v-col cols="10">
-                                        <v-text-field
-                                            hide-details
-                                            solo
-                                            flat
-                                            dense
-                                            clearable
-                                            type="text"
-                                            :label="item.value"
-                                            class="filter-input"
-                                            :ref="`filter-input-${item.value}`"
-                                            @change="onFilterField(item)"
-                                        >
-                                            <template v-slot:prepend-inner>
-                                                <v-icon small>mdi-filter</v-icon>
-                                            </template>
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
-                            </template>
-                            <template v-if="checkFilterFieldVisibility(item, 'list')">
-                                <v-row no-gutters>
-                                    <v-col>
-                                        <v-select
-                                            hide-details
-                                            solo
-                                            flat
-                                            dense
-                                            :ref="`filter-input-${item.value}`"
-                                            :items="['df', 'dss', 'sfdfsf', 'ddghh']"
-                                            value="df"
-                                            class="filter-input"
-                                            clearable
-                                            @change="onFilterField(item)"
-                                        >
-                                            <template v-slot:prepend-inner>
-                                                <v-icon small>mdi-filter</v-icon>
-                                            </template>
-                                        </v-select>
-                                    </v-col>
-                                </v-row>
-                            </template>
-                            <template v-if="checkFilterFieldVisibility(item, 'search')">
-                                <v-row no-gutters>
-                                    <v-col>
-                                        <!-- TODO: @michaelsogos -> Implement remote query -->
-                                        <v-autocomplete
-                                            hide-details
-                                            solo
-                                            flat
-                                            dense
-                                            :ref="`filter-input-${item.value}`"
-                                            class="filter-input"
-                                            :items="['df', 'dss', 'sfdfsf', 'ddghh', 'it']"
-                                            hide-selected
-                                            label="Public APIs"
-                                            @change="onFilterField(item)"
-                                            return-object
-                                            clearable
-                                        >
-                                            <template v-slot:prepend-inner>
-                                                <v-icon small>mdi-filter</v-icon>
-                                            </template>
-                                        </v-autocomplete>
-                                    </v-col>
-                                </v-row>
-                            </template>
-                        </td>
+                <template v-slot:[`body.prepend`]>
+                    <tr v-if="checkColumnFiltersVisibility()">
+                        <template v-for="(item, idx) in gridFilterHeaders">
+                            <td v-if="item != null" :key="idx" class="pa-0 ma-0" role="columnheader" scope="col">
+                                <template v-if="item.type == 'string'">
+                                    <v-row no-gutters>
+                                        <v-col cols="4">
+                                            <v-select
+                                                hide-details
+                                                solo
+                                                flat
+                                                dense
+                                                :ref="`filter-operator-${item.field}`"
+                                                :items="stringFilterOperators"
+                                                value="CONTAINS"
+                                                class="filter-input"
+                                                @change="onFilterField(item)"
+                                            ></v-select>
+                                        </v-col>
+                                        <v-col cols="8">
+                                            <v-text-field
+                                                hide-details
+                                                solo
+                                                flat
+                                                dense
+                                                clearable
+                                                type="text"
+                                                class="filter-input"
+                                                :ref="`filter-input-${item.field}`"
+                                                @change="onFilterField(item)"
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-icon small>mdi-filter</v-icon>
+                                                </template>
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                </template>
+                                <template v-if="item.type == 'list'">
+                                    <v-row no-gutters>
+                                        <v-col>
+                                            <!-- TODO: @michaelsogos -> Implement remote query -->
+                                            <v-autocomplete
+                                                hide-details
+                                                solo
+                                                flat
+                                                dense
+                                                :ref="`filter-input-${item.field}`"
+                                                class="filter-input"
+                                                :items="item.listOptions.values"
+                                                label="Public APIs"
+                                                @blur="onFilterField(item)"
+                                                clearable
+                                                :multiple="item.listOptions.enableMultiSelection"
+                                                deletable-chips
+                                                :small-chips="item.listOptions.enableMultiSelection"
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-icon small>mdi-filter</v-icon>
+                                                </template>
+                                            </v-autocomplete>
+                                        </v-col>
+                                    </v-row>
+                                </template>
+                            </td>
+                            <td v-else :key="idx" class="pa-0 ma-0" role="columnheader" scope="col"></td>
+                        </template>
                     </tr>
                 </template>
 
@@ -153,8 +134,8 @@
                             v-if="checkRowButtonVisibility(ViewAction.OPEN, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
-                            class="mr-2"
                             color="primary"
+                            class="mr-2"
                             @click.stop="onOpenItem(item)"
                         >
                             mdi-eye
@@ -262,6 +243,8 @@ export default {
             /** @type {import("../../models/UnknownEntity").UnknownEntity[]} */
             viewSelectedRows: [],
             viewSearchTerm: null,
+            /** @type  {import("../../models/ViewGridHeader").ViewGridHeader[]} */
+            viewGridColumns: [],
             /** @type {ViewFilterField[]} */
             viewColumnFilters: [],
             stringFilterOperators: [
@@ -282,60 +265,13 @@ export default {
             recordRecoverSnackbarTimeout: 5000,
             recordRecoverSnackbarCountdown: 0,
             showRecordRecoverSnackbar: false,
-            ViewAction
+            ViewAction,
+            ciccio: []
         };
     },
     computed: {
-        /** @returns {[]} */
-        gridHeaders() {
-            if (!this.view) return [];
-
-            const headers = [];
-            for (const item of this.viewDefinition.fields) {
-                if (item.hideColumn == true) continue;
-
-                let filter = null;
-                if (this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true) {
-                    filter = this.view.actions.filter.fields.find((f) => f.field == item.name);
-                }
-
-                headers.push({
-                    text: this.$options.filters.translate(item.labelKey),
-                    value: item.name,
-                    type: item.type || 'string',
-                    align: (() => {
-                        switch (item.type) {
-                            case "boolean":
-                                return 'center';
-                            case "number":
-                                return 'end';
-                            default:
-                                return 'start';
-                        }
-                    })(),
-                    columnFilter: filter
-                });
-            }
-
-            let actionButtonsCount = 0;
-            for (const action in this.view.actions) {
-                if (this.view.actions[action].enableRowButton) {
-                    actionButtonsCount++;
-                }
-            }
-
-            if (actionButtonsCount > 0)
-                headers.push({
-                    text: '',
-                    value: 'actions',
-                    sortable: false,
-                    groupable: false,
-                    align: 'end',
-                    width: `${33 + (24 * actionButtonsCount)}px`,
-                    class: "pa-0"
-                });
-
-            return headers;
+        translateFilterItem(item) {
+            return this.$options.filters.translate(item.labelKey);
         },
         /**
          * @returns {String[]}
@@ -400,6 +336,20 @@ export default {
 
             return records;
         },
+        /** @return {ViewFilterField[]} */
+        gridFilterHeaders() {
+            const filterHeaders = this.viewGridColumns.map((c) => c.columnFilter || null);
+            if (this.view.options.enableMultiSelect) filterHeaders.unshift(null);
+
+            for (const filter of filterHeaders) {
+                if (filter && filter.type == 'list' && Array.isArray(filter.listOptions.values)) {
+                    for (const value of filter.listOptions.values)
+                        value.text = this.$options.filters.translate(value.labelKey);
+                }
+            }
+
+            return filterHeaders;
+        }
     },
     methods: {
         onPageChange(/** @type {Number} */ pageNumber) {
@@ -626,36 +576,43 @@ export default {
         onClickRow(rowData, row) {
             row.select(!row.isSelected);
         },
-        onClickToolbarButton(/** @type {string} */actionName) {
-            if (this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].view)
-                alert(this.view.actions[actionName].view);
-        },
         onSearch(/** @type {String} */ searchTerm) {
             this.viewDataPageNumber = 1;
             this.viewSelectedRows = [];
             this.viewSearchTerm = searchTerm;
             this.loadData();
         },
-        onFilterField(header) {
+        /**
+         * @param {ViewFilterField} filter
+         */
+        onFilterField(filter) {
             this.viewDataPageNumber = 1;
             this.viewSelectedRows = [];
 
             let filterFieldValue = null;
             let filterFieldOperator = null;
 
-            if (header.columnFilter.type == "string") {
-                filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
-                filterFieldOperator = this.$refs[`filter-operator-${header.value}`][0].internalValue;
-            } else if (header.columnFilter.type == "list" || header.columnFilter.type == "search") {
-                filterFieldValue = this.$refs[`filter-input-${header.value}`][0].internalValue;
-                filterFieldOperator = "EQUALS";
+            if (filter.type == "string") {
+                filterFieldValue = this.$refs[`filter-input-${filter.field}`][0].internalValue;
+                filterFieldOperator = this.$refs[`filter-operator-${filter.field}`][0].internalValue;
+            } else if (filter.type == "list") {
+                const selectedValues = this.$refs[`filter-input-${filter.field}`][0].internalValue;
+                if (selectedValues && selectedValues.length > 0) {
+                    filterFieldValue = selectedValues;
+                    if (Array.isArray(selectedValues)) {
+                        filterFieldOperator = "IN";
+                    }
+                    else {
+                        filterFieldOperator = "EQUALS";
+                    }
+                }
             }
 
-            let filterFieldIndex = this.viewColumnFilters.findIndex((f) => f.field == header.columnFilter.field);
+            let filterFieldIndex = this.viewColumnFilters.findIndex((f) => f.field == filter.field);
             if (filterFieldIndex < 0) {
                 const filterField = new ViewFilterField();
-                filterField.field = header.columnFilter.field;
-                filterField.type = header.columnFilter.type;
+                filterField.field = filter.field;
+                filterField.type = filter.type;
                 filterFieldIndex = this.viewColumnFilters.push(filterField) - 1;
             }
 
@@ -663,19 +620,23 @@ export default {
                 switch (filterFieldOperator) {
                     case "CONTAINS":
                         this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}%`;
-                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        this.viewColumnFilters[filterFieldIndex].operator = 'LIKE';
                         break;
                     case "STARTSWITH":
                         this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}%`;
-                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        this.viewColumnFilters[filterFieldIndex].operator = 'LIKE';
                         break;
                     case "ENDSWITH":
                         this.viewColumnFilters[filterFieldIndex].value = `%${filterFieldValue}`;
-                        this.viewColumnFilters[filterFieldIndex].operator = 'like';
+                        this.viewColumnFilters[filterFieldIndex].operator = 'LIKE';
                         break;
                     case "EQUALS":
                         this.viewColumnFilters[filterFieldIndex].value = `${filterFieldValue}`;
                         this.viewColumnFilters[filterFieldIndex].operator = '=';
+                        break;
+                    case "IN":
+                        this.viewColumnFilters[filterFieldIndex].value = filterFieldValue;
+                        this.viewColumnFilters[filterFieldIndex].operator = 'IN';
                         break;
                 }
             else
@@ -686,9 +647,11 @@ export default {
         },
         getRowButtonDenseSize() {
             let count = 0;
-            for (const action in this.view.actions)
+            for (const action in this.view.actions) {
+                if (action == ViewAction.RESTORE && this.view.actions.showArchived) continue;
                 if (this.view.actions[action].enableRowButton == true)
                     count += 1;
+            }
 
             return count > 3 ? false : true;
         },
@@ -715,9 +678,6 @@ export default {
         checkColumnFiltersVisibility() {
             return this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true;
         },
-        checkFilterFieldVisibility(header, type) {
-            return !['data-table-select', 'actions'].includes(header.value) && header.columnFilter && header.columnFilter.type == type;
-        },
         checkFabButtonVisibility() {
             if (this.view.actions && this.view.actions.add && this.view.actions.add.enableFloatingButton == true)
                 return true;
@@ -731,7 +691,6 @@ export default {
             }
             else return false;
         },
-
         rowStyle(item) {
             let cssClasses = ["bordered-cell", "alternate-row"];
             if (item.__cssClasses)
@@ -784,10 +743,15 @@ export default {
                 columnFilter.expressionValues = {};
 
                 for (const filterField of this.viewColumnFilters) {
-                    columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
+                    if (filterField.operator == 'IN')
+                        columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter)`);
+                    else
+                        columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
                     columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
                 }
+
                 console.log(query);
+
                 if (columnFilter.expressions.length > 0)
                     query.filters.push(columnFilter);
             }
@@ -795,16 +759,70 @@ export default {
             this.viewData = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
             this.viewDataLoading = false;
         },
+        /** @returns {import("../../models/ViewGridHeader").ViewGridHeader[]} */
+        buildGridColumns() {
+            if (!this.view) return [];
+
+            const headers = [];
+
+            for (const item of this.viewDefinition.fields) {
+                if (item.hideColumn == true) continue;
+
+                let filter = null;
+                if (this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true) {
+                    filter = this.view.actions.filter.fields.find((f) => f.field == item.name);
+                }
+
+                headers.push({
+                    text: this.$options.filters.translate(item.labelKey),
+                    value: item.name,
+                    type: item.type || 'string',
+                    align: (() => {
+                        switch (item.type) {
+                            case "boolean":
+                                return 'center';
+                            case "number":
+                                return 'end';
+                            default:
+                                return 'start';
+                        }
+                    })(),
+                    columnFilter: filter,
+                });
+            }
+
+            let actionButtonsCount = 0;
+            for (const action in this.view.actions) {
+                if (this.view.actions[action].enableRowButton) {
+                    actionButtonsCount++;
+                }
+            }
+
+            if (actionButtonsCount > 0)
+                headers.push({
+                    text: '',
+                    value: 'actions',
+                    sortable: false,
+                    groupable: false,
+                    align: 'end',
+                    width: `${33 + ((this.getRowButtonDenseSize() ? 24 : 20) * actionButtonsCount)}px`,
+                    class: "pa-0"
+                });
+
+            return headers;
+        },
+
     },
     mounted() {
-        this.loadData().catch(ex => {
-            console.error(ex);
-            alert(ex.message);
-        });
+        this.viewGridColumns.splice(0, this.viewGridColumns.length, ...this.buildGridColumns());
+        this.loadData()
+            .catch(ex => {
+                console.error(ex);
+                alert(ex.message);
+            });
     }
 }
 </script>
-
 <style>
 .bordered-cell td {
     border-right: thin solid rgba(0, 0, 0, 0.12);
@@ -824,4 +842,24 @@ export default {
     margin-left: -16px;
     margin-right: -12px;
 } */
+
+.v-data-table--fixed-header > .v-data-table__wrapper > table > tbody > tr > td[role="columnheader"] {
+    position: sticky;
+    top: 32px;
+    background: #fff;
+    background-image: initial;
+    background-position-x: initial;
+    background-position-y: initial;
+    background-size: initial;
+    background-attachment: initial;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: rgb(255, 255, 255);
+    z-index: 2;
+}
+
+table > tbody > tr > td[role="columnheader"] .v-text-field.v-text-field--solo .v-input__control {
+    min-height: 32px !important;
+    padding: 0;
+}
 </style>
