@@ -16,8 +16,8 @@
 
             <v-btn
                 :color="view.color || 'tertiary'"
-                fab
                 absolute
+                fab
                 dark
                 bottom
                 right
@@ -28,6 +28,7 @@
             >
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
+
             <v-data-table
                 :headers="viewGridColumns"
                 :items="gridRecords"
@@ -55,7 +56,7 @@
                 v-model="viewSelectedRows"
             >
                 <template v-slot:[`body.prepend`]>
-                    <tr v-if="checkColumnFiltersVisibility()">
+                    <tr v-if="checkColumnFiltersVisibility()" class="bordered-cell">
                         <template v-for="(item, idx) in gridFilterHeaders">
                             <td v-if="item != null" :key="idx" class="pa-0 ma-0" role="columnheader" scope="col">
                                 <template v-if="item.type == 'string'">
@@ -81,9 +82,9 @@
                                                 dense
                                                 clearable
                                                 type="text"
-                                                class="filter-input"
                                                 :ref="`filter-input-${item.field}`"
                                                 @change="onFilterField(item)"
+                                                :label="item.label"
                                             >
                                                 <template v-slot:prepend-inner>
                                                     <v-icon small>mdi-filter</v-icon>
@@ -95,24 +96,60 @@
                                 <template v-if="item.type == 'list'">
                                     <v-row no-gutters>
                                         <v-col>
-                                            <!-- TODO: @michaelsogos -> Implement remote query -->
                                             <v-autocomplete
                                                 hide-details
                                                 solo
                                                 flat
                                                 dense
                                                 :ref="`filter-input-${item.field}`"
-                                                class="filter-input"
                                                 :items="item.listOptions.values"
-                                                label="Public APIs"
+                                                :label="item.label"
                                                 @blur="onFilterField(item)"
                                                 clearable
                                                 :multiple="item.listOptions.enableMultiSelection"
                                                 deletable-chips
                                                 :small-chips="item.listOptions.enableMultiSelection"
+                                                v-if="item.listOptions.values"
+                                                item-color="tertiary"
+                                                color="tertiary"
+                                                :menu-props="{ closeOnClick: true }"
                                             >
                                                 <template v-slot:prepend-inner>
                                                     <v-icon small>mdi-filter</v-icon>
+                                                </template>
+                                            </v-autocomplete>
+                                            <v-autocomplete
+                                                hide-details
+                                                solo
+                                                flat
+                                                dense
+                                                :ref="`filter-input-${item.field}`"
+                                                :items="item.listOptions.query.queryResultItems"
+                                                :label="item.label"
+                                                :loading="item.listOptions.query.loading"
+                                                @update:search-input="onLoadFilterItems($event, item)"
+                                                @blur="onFilterField(item)"
+                                                clearable
+                                                :multiple="item.listOptions.enableMultiSelection"
+                                                deletable-chips
+                                                :small-chips="item.listOptions.enableMultiSelection"
+                                                :no-data-text="translate('no-data-message')"
+                                                v-if="item.listOptions.query"
+                                                item-color="tertiary"
+                                                color="tertiary"
+                                                :menu-props="{ closeOnClick: true }"
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-icon small>mdi-filter</v-icon>
+                                                </template>
+
+                                                <template v-slot:append-item>
+                                                    <div
+                                                        v-if="item.listOptions.query.queryResultItems.length > 10"
+                                                        class="caption text-end px-4 tertiary--text"
+                                                    >
+                                                        {{ "count-items-found" | translate({ count: item.listOptions.query.queryResultCount }) }}
+                                                    </div>
                                                 </template>
                                             </v-autocomplete>
                                         </v-col>
@@ -214,7 +251,7 @@
 <script>
 import $ from "../../store/types";
 import { LowLevelUtils } from "../../common/LowLevelUtils";
-import { View, ViewSort, ViewFilter, ViewFilterField } from 'src/models/View';
+import { View, ViewSort, ViewFilter, ViewFilterField, ViewFilterFieldListQueryResultItem, ViewFilterFieldListQuery } from 'src/models/View';
 import { Query } from 'src/models/Query';
 import { OpenView } from 'src/models/OpenView';
 import { ConfirmDialog } from '../../models/ConfirmDialog';
@@ -266,13 +303,9 @@ export default {
             recordRecoverSnackbarCountdown: 0,
             showRecordRecoverSnackbar: false,
             ViewAction,
-            ciccio: []
         };
     },
     computed: {
-        translateFilterItem(item) {
-            return this.$options.filters.translate(item.labelKey);
-        },
         /**
          * @returns {String[]}
          */
@@ -346,12 +379,22 @@ export default {
                     for (const value of filter.listOptions.values)
                         value.text = this.$options.filters.translate(value.labelKey);
                 }
+                if (filter && filter.type == 'list' && filter.listOptions.query) {
+                    filter.listOptions.query = Object.assign(new ViewFilterFieldListQuery, filter.listOptions.query);
+                }
             }
 
             return filterHeaders;
         }
     },
     methods: {
+        /**
+       * @param {String} labelKey
+       * @returns {String}
+       */
+        translate(labelKey) {
+            return this.$options.filters.translate(labelKey);
+        },
         onPageChange(/** @type {Number} */ pageNumber) {
             this.viewDataPageNumber = pageNumber;
             this.loadData();
@@ -750,8 +793,6 @@ export default {
                     columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
                 }
 
-                console.log(query);
-
                 if (columnFilter.expressions.length > 0)
                     query.filters.push(columnFilter);
             }
@@ -771,6 +812,9 @@ export default {
                 let filter = null;
                 if (this.view.actions && this.view.actions.filter && this.view.actions.filter.enableColumns == true) {
                     filter = this.view.actions.filter.fields.find((f) => f.field == item.name);
+                    if (filter) {
+                        filter.label = this.$options.filters.translate(item.labelKey);
+                    }
                 }
 
                 headers.push({
@@ -811,7 +855,64 @@ export default {
 
             return headers;
         },
+        /**
+        * @param {String} searchTerm
+        * @param {ViewFilterField} filter
+        */
+        async onLoadFilterItems(searchTerm, filter) {
+            filter.listOptions.query.loading = true;
 
+            const query = new Query();
+            query.brick = filter.listOptions.query.brick;
+            query.entity = filter.listOptions.query.entity;
+            query.fields = [];
+            query.fields.push(filter.listOptions.query.valueFieldName);
+            const textField = filter.listOptions.query.textFieldName || filter.listOptions.query.labelKeyFieldName;
+            if (textField != filter.listOptions.query.valueFieldName)
+                query.fields.push(textField);
+            query.filters = [...filter.listOptions.query.filters || []];
+            query.showArchivedEntities = filter.listOptions.query.showArchivedEntities;
+            query.take = 10;
+            query.skip = 0;
+            query.sorts = filter.listOptions.query.sorts || [];
+            query.excludeIDField = true;
+
+            if (searchTerm) {
+                const searchFilter = new ViewFilter();
+                searchFilter.leftOperator = "AND";
+                searchFilter.expressionOperator = "OR";
+                searchFilter.expressionValues = {};
+                searchFilter.expressionValues["searchTerm"] = `%${searchTerm}%`;
+
+                for (const searchField of filter.listOptions.query.searchFields) {
+                    searchFilter.expressions.push(`$self.${searchField} LIKE :searchTerm`);
+                }
+
+                query.filters.push(searchFilter);
+            }
+
+            /** @type {import("../../models/QueryResult").QueryResult} */
+            const queryResult = await this.$store.getters[$.getters.APP_GET_RECORDS](query);
+
+            if (!filter.listOptions.query.queryResultItems) filter.listOptions.query.queryResultItems = [];
+            filter.listOptions.query.queryResultCount = 0;
+
+            if (queryResult) {
+                filter.listOptions.query.queryResultItems.splice(0, filter.listOptions.query.queryResultItems.length,
+                    ...queryResult.data.map(r => {
+                        const item = new ViewFilterFieldListQueryResultItem();
+                        item.text = (filter.listOptions.query.labelKeyFieldName
+                            ? this.$options.filters.translate(r[filter.listOptions.query.labelKeyFieldName])
+                            : r[filter.listOptions.query.textFieldName]);
+                        item.value = r[filter.listOptions.query.valueFieldName];
+                        return item;
+                    }));
+
+                filter.listOptions.query.queryResultCount = queryResult.count;
+            }
+
+            filter.listOptions.query.loading = false;
+        }
     },
     mounted() {
         this.viewGridColumns.splice(0, this.viewGridColumns.length, ...this.buildGridColumns());
@@ -845,7 +946,7 @@ export default {
 
 .v-data-table--fixed-header > .v-data-table__wrapper > table > tbody > tr > td[role="columnheader"] {
     position: sticky;
-    top: 32px;
+    top: 36px;
     background: #fff;
     background-image: initial;
     background-position-x: initial;
@@ -861,5 +962,9 @@ export default {
 table > tbody > tr > td[role="columnheader"] .v-text-field.v-text-field--solo .v-input__control {
     min-height: 32px !important;
     padding: 0;
+}
+
+.v-list-item__mask {
+    color: var(--v-tertiary-base) !important;
 }
 </style>

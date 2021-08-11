@@ -19,5 +19,7 @@ export class Query {
         this.take = null;
         /** @type {Number} */
         this.skip = null;
+        /** @type {Boolean} */
+        this.excludeIDField = false;
     }
 }

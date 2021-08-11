@@ -278,6 +278,8 @@ export class ViewFilterField {
         this.operator = null;
         /** @type {ViewFilterFieldListOptions} */
         this.listOptions = null;
+        /** @type {String} */
+        this.label = null;
     }
 }
 
@@ -313,6 +315,8 @@ export class ViewFilterFieldListOptions {
         this.enableMultiSelection = null;
         /** @type {ViewFilterFieldListValue[]} */
         this.values = [];
+        /** @type {ViewFilterFieldListQuery} */
+        this.query = null;
     }
 }
 
@@ -320,6 +324,44 @@ export class ViewFilterFieldListValue {
     constructor() {
         /** @type {String} */
         this.labelKey = null;
+        /** @type {any} */
+        this.value = null;
+    }
+}
+
+export class ViewFilterFieldListQuery {
+    constructor() {
+        /** @type {String} */
+        this.brick = null;
+        /** @type {String} */
+        this.entity = null;
+        /** @type {String} */
+        this.valueFieldName = null;
+        /** @type {String} */
+        this.labelKeyFieldName = null;
+        /** @type {String} */
+        this.textFieldName = null;
+        /** @type {Boolean} */
+        this.loading = false;
+        /** @type {String[]} */
+        this.searchFields = [];
+        /** @type {ViewFilterFieldListQueryResultItem[]} */
+        this.queryResultItems = [];
+        /** @type {Number} */
+        this.queryResultCount = null;
+        /** @type {Boolean} */
+        this.showArchivedEntities = false;
+        /** @type {ViewFilter[]} */
+        this.filters = [];
+        /** @type {ViewSort[]} */
+        this.sorts = [];
+    }
+}
+
+export class ViewFilterFieldListQueryResultItem {
+    constructor() {
+        /** @type {String} */
+        this.text = null;
         /** @type {any} */
         this.value = null;
     }

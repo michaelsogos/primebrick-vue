@@ -384,8 +384,8 @@ const store = new Vuex.Store({
                 if (!result.hasError) {
                     return result.response;
                 } else {
-                    console.error(result.exception);
-                    alert(result.clientMessage);
+                    window.logger.error(result.exception);
+                    return null;
                 }
             },
         [$.getters.APP_GET_RECORD]:
@@ -401,8 +401,8 @@ const store = new Vuex.Store({
                 if (!result.hasError) {
                     return result.response.data.length == 1 ? result.response.data[0] : null;
                 } else {
-                    console.error(result.exception);
-                    alert(result.clientMessage);
+                    window.logger.error(result.exception);
+                    return null;
                 }
             },
         [$.getters.APP_GET_RECORDINFO]:
