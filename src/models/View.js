@@ -272,14 +272,21 @@ export class ViewFilterField {
         this.field = null;
         /** @type {String} */
         this.type = null;
-        /** @type {String} */
-        this.selectedValue = null;
-        /** @type {String} */
+        /** @type {String} The query expression value*/
+        this.value = null;
+        /** @type {String} The query expression operator (=, LIKE, etc.)*/
         this.operator = null;
         /** @type {ViewFilterFieldListOptions} */
         this.listOptions = null;
         /** @type {String} */
         this.label = null;
+        //TODO: @mso -> This should be used instead of $refs
+        this.viewModel = {
+            /** @type {String|String[]} */
+            selectedValue: null,
+            /** @type {String} */
+            selectedOperator: null,
+        };
     }
 }
 
@@ -355,6 +362,8 @@ export class ViewFilterFieldListQuery {
         this.filters = [];
         /** @type {ViewSort[]} */
         this.sorts = [];
+        /** @type {Boolean} */
+        this.error = false;
     }
 }
 

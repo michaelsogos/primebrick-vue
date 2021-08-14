@@ -5,12 +5,14 @@
             <template v-slot:header>
                 <h-view-toolbar
                     :view="view"
+                    :appliedFilters="appliedDialogFilters"
                     @delete="onDeleteItems"
                     @archive="onArchiveItems"
                     @refresh="onRefresh"
                     @search="onSearch"
                     @show-archived="onShowArchived"
                     @restore="onRestoreItems"
+                    @filter="onShowFilterDialog"
                 ></h-view-toolbar>
             </template>
 
@@ -71,7 +73,9 @@
                                                 :items="stringFilterOperators"
                                                 value="CONTAINS"
                                                 class="filter-input"
+                                                color="tertiary"
                                                 @change="onFilterField(item)"
+                                                :menu-props="{ offsetY: true, rounded: '0' }"
                                             ></v-select>
                                         </v-col>
                                         <v-col cols="8">
@@ -84,6 +88,7 @@
                                                 type="text"
                                                 :ref="`filter-input-${item.field}`"
                                                 @change="onFilterField(item)"
+                                                color="tertiary"
                                                 :label="item.label"
                                             >
                                                 <template v-slot:prepend-inner>
@@ -133,14 +138,26 @@
                                                 :multiple="item.listOptions.enableMultiSelection"
                                                 deletable-chips
                                                 :small-chips="item.listOptions.enableMultiSelection"
-                                                :no-data-text="translate('no-data-message')"
                                                 v-if="item.listOptions.query"
                                                 item-color="tertiary"
-                                                color="tertiary"
+                                                :color="item.listOptions.query.error ? 'error' : 'tertiary'"
+                                                :append-icon="item.listOptions.query.error ? 'mdi-cancel' : '$dropdown'"
                                                 :menu-props="{ closeOnClick: true }"
                                             >
                                                 <template v-slot:prepend-inner>
                                                     <v-icon small>mdi-filter</v-icon>
+                                                </template>
+
+                                                <template v-slot:no-data>
+                                                    <v-list-item>
+                                                        <v-list-item-content>
+                                                            <v-list-item-title
+                                                                :class="[item.listOptions.query.error ? 'error--text' : 'tertiary--text']"
+                                                            >
+                                                                {{ (item.listOptions.query.error ? "query-error" : "no-data-message") | translate }}
+                                                            </v-list-item-title>
+                                                        </v-list-item-content>
+                                                    </v-list-item>
                                                 </template>
 
                                                 <template v-slot:append-item>
@@ -226,6 +243,7 @@
                 <div v-else></div>
             </template>
         </h-panel>
+
         <v-snackbar v-model="showRecordRecoverSnackbar" :timeout="5000" centered color="info" elevation="24" vertical>
             <v-progress-linear
                 v-model="recordRecoverSnackbarCountdown"
@@ -245,6 +263,159 @@
                 </v-btn>
             </template>
         </v-snackbar>
+
+        <v-dialog max-width="800" v-model="showFilterDialog">
+            <v-card>
+                <v-toolbar dense color="grey lighten-3" flat>
+                    <v-toolbar-title>
+                        {{ "filters-dialog-title" | translate }}
+                    </v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn icon color="primary" @click="showFilterDialog = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
+                <v-card-text>
+                    <v-row>
+                        <v-col class="py-0">
+                            <v-radio-group ref="dialog-filters-operator" value="AND">
+                                <v-radio :label="translate('filter-and-operator')" value="AND"></v-radio>
+                                <v-radio :label="translate('filter-or-operator')" value="OR"></v-radio>
+                            </v-radio-group>
+                        </v-col>
+                    </v-row>
+                    <v-row>
+                        <v-col cols="11" class="py-0">
+                            <v-select
+                                outlined
+                                dense
+                                :label="translate('select-field')"
+                                :items="dialogFilterFields"
+                                item-text="label"
+                                return-object
+                                ref="dialog-filters-field-selector"
+                            ></v-select>
+                        </v-col>
+                        <v-col cols="1" class="py-0">
+                            <v-btn icon color="success" @click="onAddFilter">
+                                <v-icon>mdi-plus</v-icon>
+                            </v-btn>
+                        </v-col>
+                    </v-row>
+                    <template v-for="(filter, index) in this.viewDialogFilters">
+                        <v-divider class="my-3" :key="`dialog-filters-divider-${index}`"></v-divider>
+                        <v-row :key="`dialog-filters-row-${index}`">
+                            <v-col align-self="center">
+                                <div class="primary--text font-weight-bold">{{ filter.label }}</div>
+                            </v-col>
+                            <v-col cols="3" align-self="center">
+                                <v-select
+                                    hide-details
+                                    outlined
+                                    flat
+                                    dense
+                                    :items="stringFilterOperators"
+                                    color="tertiary"
+                                    :label="translate('select-operator')"
+                                    v-if="filter.type == 'string'"
+                                    :menu-props="{ offsetY: true, rounded: '0' }"
+                                    v-model="filter.viewModel.selectedOperator"
+                                ></v-select>
+                                <span v-if="filter.type == 'list'">{{ "equals-to" | translate }}</span>
+                            </v-col>
+                            <v-col cols="6">
+                                <v-text-field
+                                    hide-details
+                                    outlined
+                                    flat
+                                    dense
+                                    clearable
+                                    color="tertiary"
+                                    type="text"
+                                    v-if="filter.type == 'string'"
+                                    :label="translate('type-value')"
+                                    v-model="filter.viewModel.selectedValue"
+                                ></v-text-field>
+                                <template v-if="filter.type == 'list'">
+                                    <v-autocomplete
+                                        hide-details
+                                        outlined
+                                        flat
+                                        dense
+                                        :items="filter.listOptions.values"
+                                        :label="translate('select-value')"
+                                        clearable
+                                        :multiple="filter.listOptions.enableMultiSelection"
+                                        deletable-chips
+                                        :small-chips="filter.listOptions.enableMultiSelection"
+                                        v-if="filter.listOptions.values"
+                                        item-color="tertiary"
+                                        color="tertiary"
+                                        :menu-props="{ closeOnClick: true }"
+                                        v-model="filter.viewModel.selectedValue"
+                                    ></v-autocomplete>
+                                    <v-autocomplete
+                                        hide-details
+                                        outlined
+                                        flat
+                                        dense
+                                        :items="filter.listOptions.query.queryResultItems"
+                                        :label="translate('select-value')"
+                                        :loading="filter.listOptions.query.loading"
+                                        @update:search-input="onLoadFilterItems($event, filter)"
+                                        clearable
+                                        :multiple="filter.listOptions.enableMultiSelection"
+                                        deletable-chips
+                                        :small-chips="filter.listOptions.enableMultiSelection"
+                                        v-if="filter.listOptions.query"
+                                        item-color="tertiary"
+                                        :color="filter.listOptions.query.error ? 'error' : 'tertiary'"
+                                        :append-icon="filter.listOptions.query.error ? 'mdi-cancel' : '$dropdown'"
+                                        :menu-props="{ closeOnClick: true }"
+                                        v-model="filter.viewModel.selectedValue"
+                                    >
+                                        <template v-slot:no-data>
+                                            <v-list-item>
+                                                <v-list-item-content>
+                                                    <v-list-item-title :class="[filter.listOptions.query.error ? 'error--text' : 'tertiary--text']">
+                                                        {{ (filter.listOptions.query.error ? "query-error" : "no-data-message") | translate }}
+                                                    </v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </template>
+
+                                        <template v-slot:append-item>
+                                            <div
+                                                v-if="filter.listOptions.query.queryResultItems.length > 10"
+                                                class="caption text-end px-4 tertiary--text"
+                                            >
+                                                {{ "count-items-found" | translate({ count: filter.listOptions.query.queryResultCount }) }}
+                                            </div>
+                                        </template>
+                                    </v-autocomplete>
+                                </template>
+                            </v-col>
+                            <v-col cols="1">
+                                <v-btn icon color="error" @click="onRemoveDialogFilter(index)">
+                                    <v-icon>mdi-minus</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </template>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text color="error" :disabled="this.viewDialogFilters.length <= 0" @click="onResetDialogFilters">
+                        <v-icon left>mdi-filter-remove</v-icon>
+                        {{ "reset" | translate }}
+                    </v-btn>
+                    <v-btn text color="success" :disabled="this.viewDialogFilters.length <= 0" @click="onApplyDialogFilters">
+                        <v-icon left>mdi-filter-plus</v-icon>
+                        {{ "apply" | translate }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -284,6 +455,9 @@ export default {
             viewGridColumns: [],
             /** @type {ViewFilterField[]} */
             viewColumnFilters: [],
+            /** @type {ViewFilterField[]} */
+            viewDialogFilters: [],
+            appliedDialogFilters: 0,
             stringFilterOperators: [
                 {
                     text: this.$options.filters.translate("contains"),
@@ -302,6 +476,7 @@ export default {
             recordRecoverSnackbarTimeout: 5000,
             recordRecoverSnackbarCountdown: 0,
             showRecordRecoverSnackbar: false,
+            showFilterDialog: false,
             ViewAction,
         };
     },
@@ -385,6 +560,11 @@ export default {
             }
 
             return filterHeaders;
+        },
+        /** @return {ViewFilterField[]} */
+        dialogFilterFields() {
+            const filterFields = this.viewGridColumns.filter((c) => c.columnFilter).map((c) => c.columnFilter);
+            return filterFields;
         }
     },
     methods: {
@@ -688,6 +868,54 @@ export default {
 
             this.loadData();
         },
+        onRemoveDialogFilter(index) {
+            this.viewDialogFilters.splice(index, 1);
+        },
+        onResetDialogFilters() {
+            this.viewDialogFilters.splice(0);
+            this.loadData();
+        },
+        onApplyDialogFilters() {
+            this.viewDataPageNumber = 1;
+            this.viewSelectedRows = [];
+
+            for (const filter of this.viewDialogFilters) {
+                if (filter.type == "list") {
+                    if (Array.isArray(filter.viewModel.selectedValue)) {
+                        filter.viewModel.selectedOperator = "IN";
+                    }
+                    else {
+                        filter.viewModel.selectedOperator = "EQUALS";
+                    }
+                }
+
+                if (filter.viewModel.selectedValue)
+                    switch (filter.viewModel.selectedOperator) {
+                        case "CONTAINS":
+                            filter.value = `%${filter.viewModel.selectedValue}%`;
+                            filter.operator = 'LIKE';
+                            break;
+                        case "STARTSWITH":
+                            filter.value = `${filter.viewModel.selectedValue}%`;
+                            filter.operator = 'LIKE';
+                            break;
+                        case "ENDSWITH":
+                            filter.value = `%${filter.viewModel.selectedValue}`;
+                            filter.operator = 'LIKE';
+                            break;
+                        case "EQUALS":
+                            filter.value = `${filter.viewModel.selectedValue}`;
+                            filter.operator = '=';
+                            break;
+                        case "IN":
+                            filter.value = filter.viewModel.selectedValue;
+                            filter.operator = 'IN';
+                            break;
+                    }
+            }
+
+            this.loadData();
+        },
         getRowButtonDenseSize() {
             let count = 0;
             for (const action in this.view.actions) {
@@ -791,6 +1019,31 @@ export default {
                     else
                         columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
                     columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
+                }
+
+                if (columnFilter.expressions.length > 0)
+                    query.filters.push(columnFilter);
+            }
+
+            this.appliedDialogFilters = 0;
+            if (this.viewDialogFilters && this.viewDialogFilters.length > 0) {
+                const columnFilter = new ViewFilter();
+                columnFilter.leftOperator = "AND";
+                columnFilter.expressionOperator = this.$refs['dialog-filters-operator'].selectedItem.value;
+                columnFilter.expressionValues = {};
+
+                for (let idx = 0; idx < this.viewDialogFilters.length; idx++) {
+                    const filterField = this.viewDialogFilters[idx];
+
+                    if (!filterField.value || !filterField.operator) continue;
+
+                    if (filterField.operator == 'IN')
+                        columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter_${idx})`);
+                    else
+                        columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter_${idx}`);
+                    columnFilter.expressionValues[`${filterField.field}_field_filter_${idx}`] = filterField.value;
+
+                    this.appliedDialogFilters++;
                 }
 
                 if (columnFilter.expressions.length > 0)
@@ -909,9 +1162,21 @@ export default {
                     }));
 
                 filter.listOptions.query.queryResultCount = queryResult.count;
+                filter.listOptions.query.error = false;
+            } else {
+                filter.listOptions.query.error = true;
             }
 
             filter.listOptions.query.loading = false;
+        },
+        onShowFilterDialog() {
+            this.showFilterDialog = true;
+        },
+        onAddFilter() {
+            const selectedValues = this.$refs['dialog-filters-field-selector'].selectedItems;
+            if (Array.isArray(selectedValues)) {
+                this.viewDialogFilters.push(Object.assign(new ViewFilterField, selectedValues[0]));
+            }
         }
     },
     mounted() {

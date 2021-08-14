@@ -39,6 +39,13 @@
             <v-icon left>mdi-information-variant</v-icon>
             {{ "information" | translate }}
         </v-btn>
+        <v-btn text tile class="caption primary--text" v-if="checkToolbarButtonVisibility(ViewAction.FILTER)" @click="$emit(ViewAction.FILTER)">
+            <v-icon left>mdi-filter</v-icon>
+            {{ "filters" | translate }}
+        </v-btn>
+        <v-chip small color="info" v-if="appliedFilters">
+            {{ "applied-filters-text" | translate({ count: appliedFilters }) }}
+        </v-chip>
         <v-spacer></v-spacer>
         <v-select
             v-if="checkToolbarButtonVisibility(ViewAction.SHOW_ARCHIVED)"
@@ -128,6 +135,7 @@ export default {
     name: "h-view-toolbar",
     props: {
         view: View,
+        appliedFilters: Number
     },
     data: function () {
         return {
@@ -198,6 +206,9 @@ export default {
                 }
                 case ViewAction.RESTORE: {
                     return isVisible && this.view.definition.showArchivedEntities != 'none';
+                }
+                case ViewAction.FILTER: {
+                    return this.view.actions && this.view.actions.filter && this.view.actions.filter.enableDialog == true;
                 }
                 default:
                     return isVisible;
