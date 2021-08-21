@@ -25,6 +25,9 @@ Vue.component(UIConfirmDialog.name, UIConfirmDialog);
 import UIViewLog from "../components/ui/ViewLog.vue";
 Vue.component(UIViewLog.name, UIViewLog);
 
+import UIAppBanner from "../components/ui/AppBanner.vue";
+Vue.component(UIAppBanner.name, UIAppBanner);
+
 //* Register Views *//
 //--------------------------//
 import ViewCards from "../components/views/ViewCards.vue";

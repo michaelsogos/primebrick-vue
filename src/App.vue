@@ -50,6 +50,7 @@
         </v-app-bar>
 
         <v-main class="content-not-scrollable blue-grey lighten-4">
+            <h-app-banner></h-app-banner>
             <component :is="$store.state.app.page"></component>
             <h-confirm-dialog></h-confirm-dialog>
         </v-main>
@@ -79,6 +80,9 @@ export default {
         },
         onLogout() {
             this.$store.dispatch($.actions.APP_LOGOUT_USER);
+        },
+        onDismissBanner() {
+            this.$store.commit($.mutations.APP_HIDE_BANNER);
         }
     },
     mounted() {
@@ -122,5 +126,12 @@ body::-webkit-scrollbar {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
     background: var(--v-primary-base);
+}
+
+.truncate-overflow {
+    display: -webkit-box;
+    -webkit-line-clamp: 13;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 </style>

@@ -12,7 +12,7 @@ export class ConfirmDialog {
         this.subTitle = null;
         this.message = "{{missing-message}}";
         this.iconColor = "info";
-        this.icon = "help-circle-outline";
+        this.icon = "mdi-help-circle-outline";
         this.noButtonText = translate.filter("no");
         this.yesButtonText = this.isAlert ? translate.filter("ok") : translate.filter("yes");
         this.otherButtonText = null;

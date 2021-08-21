@@ -239,8 +239,7 @@
             </v-data-table>
 
             <template v-slot:footer>
-                <h-view-log v-if="view.options.showLogs"></h-view-log>
-                <div v-else></div>
+                <div></div>
             </template>
         </h-panel>
 
@@ -264,6 +263,7 @@
             </template>
         </v-snackbar>
 
+        <!-- TODO: @mso -> Move this dialog in a separate component and its logic also -->
         <v-dialog max-width="800" v-model="showFilterDialog">
             <v-card>
                 <v-toolbar dense color="grey lighten-3" flat>

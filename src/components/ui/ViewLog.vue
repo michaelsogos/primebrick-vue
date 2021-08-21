@@ -4,7 +4,7 @@
             <v-icon small class="mx-1">mdi-chevron-down</v-icon>
             {{ "collapse" | translate }}
         </v-btn>
-        <v-simple-table dense class="grey lighten-4">
+        <v-simple-table dense class="grey lighten-4 rounded-b-lg rounded-t-0">
             <template v-slot:default>
                 <tbody>
                     <template v-for="(log, index) in $store.state.app.logs">

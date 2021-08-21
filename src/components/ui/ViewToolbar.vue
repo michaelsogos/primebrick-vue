@@ -91,16 +91,20 @@
         <v-btn-toggle
             v-if="view.alternativeViews && view.alternativeViews.length > 0"
             :value="0"
-            background-color="transparent"
             group
             :color="computeColor(view.color)"
             class="pa-0 ma-0"
         >
-            <v-btn :title="view.definition.type">
+            <v-btn :title="$options.filters.translate(`view-type-${view.definition.type}`)" class="ma-0 pa-0">
                 <v-icon>{{ getViewIcon(view.definition.type) }}</v-icon>
             </v-btn>
             <template v-for="item in view.alternativeViews">
-                <v-btn :key="item.type" :title="item.type">
+                <v-btn
+                    :key="item.type"
+                    :title="$options.filters.translate(`view-type-${item.type}`)"
+                    class="ma-0 pa-0"
+                    @click.stop="onChangeView(item.name)"
+                >
                     <v-icon>{{ getViewIcon(item.type) }}</v-icon>
                 </v-btn>
             </template>
@@ -215,7 +219,7 @@ export default {
             }
         },
         /** @returns {String} */
-        getViewIcon(/** @type {string} */ viewType) {
+        getViewIcon(/** @type {String} */ viewType) {
             switch (viewType) {
                 case "cards":
                     return 'mdi-card-text';
@@ -278,7 +282,7 @@ export default {
             return links;
         },
         /** @returns {String} */
-        getActionIcon(/** @type {string} */ actionName) {
+        getActionIcon(/** @type {String} */ actionName) {
             switch (actionName) {
                 case ViewAction.ADD:
                     return 'mdi-plus';
@@ -300,6 +304,10 @@ export default {
                     return "";
             }
         },
+        onChangeView(/** @type {String} */ viewName) {
+            this.$store.dispatch($.actions.APP_CHANGE_VIEW, viewName);
+
+        }
     }
 };
 </script>

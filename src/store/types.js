@@ -12,6 +12,7 @@ module.exports = {
         APP_ARCHIVE_ENTITIES: "actionAppArchiveEntities",
         APP_RESTORE_ENTITIES: "actionAppRestoreEntities",
         APP_RESTORE_ENTITY: "actionAppRestoreEntity",
+        APP_CHANGE_VIEW: "actionAppChangeView",
     },
     getters: {
         APP_GET_RECORDS: "getterAppGetRecords",
@@ -33,5 +34,8 @@ module.exports = {
         APP_SHOW_CONFIRMDIALOG: "mutationAppShowConfirmDialog",
         APP_HIDE_CONFIRMDIALOG: "mutationAppHideConfirmDialog",
         APP_ADD_LOGENTRY: "mutationAppAddLogEntry",
+        APP_CHANGE_VIEWTAB: "mutationAppChangeViewTab",
+        APP_SHOW_BANNER: "mutationAppShowBanner",
+        APP_HIDE_BANNER: "mutationAppHideBanner",
     },
 };

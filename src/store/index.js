@@ -12,6 +12,8 @@ import { Translation } from "../models/Translation";
 import { AppInfo } from "../models/AppInfo";
 import { View } from "../models/View";
 import Vuetify from "../plugins/vuetify";
+import { ConfirmDialog } from "../models/ConfirmDialog";
+import { AppBanner } from "../models/AppBanner";
 
 Vue.use(Vuex);
 
@@ -34,8 +36,10 @@ const initialState = {
         /** @type {Translation[]} */
         translations: [],
         ui: {
-            /** @type {import("../models/ConfirmDialog").ConfirmDialog} */
+            /** @type {ConfirmDialog} */
             confirmDialog: null,
+            /** @type {AppBanner} */
+            banner: null,
         },
         /** @type {import("../models/AppLog").AppLog[]} */
         logs: [],
@@ -143,7 +147,7 @@ const store = new Vuex.Store({
          * @param {initialState} state
          */
         [$.mutations.APP_HIDE_CONFIRMDIALOG](state) {
-            state.app.ui.confirmDialog.show = false;
+            state.app.ui.confirmDialog = new ConfirmDialog();
         },
         /**
          *
@@ -154,6 +158,30 @@ const store = new Vuex.Store({
             state.app.logs.unshift(appLog);
 
             if (state.app.logs.length > 10) state.app.logs.splice(10);
+        },
+        /**
+         *
+         * @param {initialState} state
+         * @param {View} view
+         */
+        [$.mutations.APP_CHANGE_VIEWTAB](state, view) {
+            state.app.viewTabs.splice(state.app.viewTabIndex, 1, view);
+        },
+        /**
+         *
+         * @param {initialState} state
+         * @param {AppBanner} confirmDialog
+         */
+        [$.mutations.APP_SHOW_BANNER](state, confirmDialog) {
+            state.app.ui.banner = confirmDialog;
+            state.app.ui.banner.show = true;
+        },
+        /**
+         *
+         * @param {initialState} state
+         */
+        [$.mutations.APP_HIDE_BANNER](state) {
+            state.app.ui.banner = new AppBanner();
         },
     },
     actions: {
@@ -181,6 +209,8 @@ const store = new Vuex.Store({
                     context.commit($.mutations.APP_SET_AUTHTOKEN, null);
                     context.commit($.mutations.APP_SET_AUTHENTICATION, false);
                 }
+
+                context.commit($.mutations.APP_HIDE_BANNER);
             } catch (/** @type {Error}*/ ex) {
                 console.error(ex);
                 alert(ex.clientMessage || ex.message);
@@ -253,6 +283,23 @@ const store = new Vuex.Store({
             } else {
                 console.error(result.exception);
                 alert(result.clientMessage); //TODO: @michaelsogos -> show error page
+            }
+        },
+        /**
+         *
+         * @param {ActionContext<initialState>} context
+         * @param {String} viewName
+         */
+        async [$.actions.APP_CHANGE_VIEW](context, viewName) {
+            let result = await RestApiService.get($api.GET_META_VIEW, {
+                viewName,
+            });
+
+            if (!result.hasError) {
+                const view = Object.assign(new View(), result.response);
+                context.commit($.mutations.APP_CHANGE_VIEWTAB, view);
+            } else {
+                window.logger.error(result.clientMessage, { title: context.getters[$.getters.APP_TRANSLATE_STRING]("view-not-found"), show: true });
             }
         },
         /**

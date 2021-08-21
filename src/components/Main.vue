@@ -2,11 +2,7 @@
     <v-container fluid fill-height class="pa-2 ma-0 align-content-start">
         <h-panel>
             <template v-slot:header>
-                <v-tabs
-                    v-model="$store.state.app.viewTabIndex"
-                    background-color="transparent"
-                    :hide-slider="true"
-                >
+                <v-tabs v-model="$store.state.app.viewTabIndex" background-color="transparent" :hide-slider="true">
                     <v-tab
                         v-for="(item, index) in viewTabs"
                         :key="item.name"
@@ -16,37 +12,19 @@
                         active-class="tab-item-selected"
                     >
                         <v-icon small class="mr-2">{{ item.icon }}</v-icon>
-                        <span class="primary--text">{{
-                            item.labelKey | translate
-                        }}</span>
-                        <v-btn
-                            small
-                            icon
-                            class="ma-0 ml-3 "
-                            @click.stop="onCloseTab(index)"
-                        >
+                        <span class="primary--text">{{ item.labelKey | translate }}</span>
+                        <v-btn small icon class="ma-0 ml-3" @click.stop="onCloseTab(index)">
                             <v-icon small>mdi-close-circle</v-icon>
                         </v-btn>
                     </v-tab>
                 </v-tabs>
             </template>
             <template v-slot:footer>
-                <div></div>
+                <h-view-log></h-view-log>
             </template>
-            <v-tabs-items
-                v-model="$store.state.app.viewTabIndex"
-                class="fill-height"
-            >
-                <v-tab-item
-                    v-for="(item, index) in viewTabs"
-                    :key="item.name"
-                    class="fill-height"
-                >
-                    <component
-                        :is="loadView(index)"
-                        :view="item"
-                        ref="activeView"
-                    ></component>
+            <v-tabs-items v-model="$store.state.app.viewTabIndex" class="fill-height">
+                <v-tab-item v-for="(item, index) in viewTabs" :key="item.name" class="fill-height">
+                    <component :is="loadView(index)" :view="item" ref="activeView"></component>
                 </v-tab-item>
             </v-tabs-items>
         </h-panel>
