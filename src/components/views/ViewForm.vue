@@ -15,8 +15,8 @@
                     <v-alert type="error" border="left" class="ma-0 my-2" dense elevation="0" light v-if="!formValidity">
                         {{ "form-validation-failed" | translate }}
                         <ul style="max-height: 200px; overflow: auto">
-                            <template v-for="field in getNotValidFields">
-                                <li :key="field.name">
+                            <template v-for="(field, index) in getNotValidFields">
+                                <li :key="`${field.name}-${index}`">
                                     {{ "not-valid-input-field" | translate({ name: field.name }) }}
                                     <ul>
                                         <li v-for="(error, index) in field.errors" :key="index">{{ error }}</li>
@@ -48,7 +48,7 @@
                                                 dense
                                                 :label="field.labelKey | translate"
                                                 v-model="viewData[field.name]"
-                                                :required="field.require"
+                                                :rules="getFieldValidationRules(field)"
                                             ></v-checkbox>
 
                                             <v-switch
@@ -56,7 +56,7 @@
                                                 dense
                                                 :label="field.labelKey | translate"
                                                 v-model="viewData[field.name]"
-                                                :required="field.require"
+                                                :rules="getFieldValidationRules(field)"
                                             ></v-switch>
 
                                             <v-text-field
@@ -66,7 +66,6 @@
                                                 :label="field.labelKey | translate"
                                                 placeholder=" "
                                                 v-model="viewData[field.name]"
-                                                :required="field.require"
                                                 :rules="getFieldValidationRules(field)"
                                             ></v-text-field>
                                         </v-col>
@@ -226,7 +225,7 @@ export default {
     methods: {
         onSave() {
             if (!this.formValidity) return;
-            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.viewDefinition.brick, this.viewDefinition.entity, this.viewData)).then((entity) => this.viewData = entity);
+            this.$store.dispatch($.actions.APP_SAVE_ENTITY, new SaveEntity(this.view.brick, this.view.entity.name, this.viewData)).then((entity) => this.viewData = entity);
         },
         onEdit() {
             this.readonly = false;
@@ -247,8 +246,8 @@ export default {
             }
             else {
                 const query = new Query();
-                query.brick = this.viewDefinition.brick;
-                query.entity = this.viewDefinition.entity;
+                query.brick = this.view.brick;
+                query.entity = this.view.entity.name;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
@@ -283,8 +282,8 @@ export default {
                 this.viewData = {};
             else {
                 const query = new Query();
-                query.brick = this.viewDefinition.brick;
-                query.entity = this.viewDefinition.entity;
+                query.brick = this.view.brick;
+                query.entity = this.view.entity.name;
 
                 const searchFilter = new ViewFilter();
                 searchFilter.expressionValues = {};
@@ -298,7 +297,7 @@ export default {
             setTimeout(() => this.$refs.form.validate(), 0);
         },
         checkIsSaveEnable() {
-            if (!this.view.actions || !this.view.actions.save) this.readonly = true;
+            if (!this.viewDefinition.actions || !this.viewDefinition.actions.save) this.readonly = true;
         }
     },
     mounted() {

@@ -5,7 +5,7 @@ export class ConfirmDialog {
      *
      * @param {Boolean} isAlert
      */
-    constructor(isAlert) {
+    constructor(isAlert = false) {
         this.isAlert = isAlert || false;
         this.show = false;
         this.title = "{{missing title}}";

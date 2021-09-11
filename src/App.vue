@@ -76,6 +76,7 @@ export default {
     },
     methods: {
         onLeaveDrawer() {
+            // @ts-ignore
             this.$refs.navTree.collapseAll();
         },
         onLogout() {

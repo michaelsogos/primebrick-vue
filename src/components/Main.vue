@@ -20,7 +20,8 @@
                 </v-tabs>
             </template>
             <template v-slot:footer>
-                <h-view-log></h-view-log>
+                <h-view-log v-if="showLogsPanel"></h-view-log>
+                <div v-else></div>
             </template>
             <v-tabs-items v-model="$store.state.app.viewTabIndex" class="fill-height">
                 <v-tab-item v-for="(item, index) in viewTabs" :key="item.name" class="fill-height">
@@ -35,6 +36,7 @@
 import $ from "../store/types";
 // eslint-disable-next-line no-unused-vars
 import { View } from '../models/View';
+import { EventBus } from '../plugins/eventBus';
 
 export default {
     name: 'page-main',
@@ -49,25 +51,32 @@ export default {
         /** @returns {Number} */
         viewTabIndex() {
             return this.$store.state.app.viewTabIndex;
+        },
+        /** @returns {Boolean} */
+        showLogsPanel() {
+            return this.viewTabs[this.viewTabIndex]?.showLogs || false;
         }
     },
     watch: {
         viewTabIndex(newValue) {
-            this.sliderColor = this.computeColor(this.viewTabs[newValue].color);
+            if (newValue != undefined)
+                this.sliderColor = this.computeColor(this.viewTabs[newValue]?.color);
+            else
+                this.sliderColor = null;
         }
     },
     methods: {
-        onClickTab(/** @type {ViewContext} */ viewTab) {
+        onClickTab(/** @type {import("../models/View").View} */ viewTab) {
             this.sliderColor = this.computeColor(viewTab.color);
         },
         onCloseTab(/** @type {Number} */ tabIndex) {
             this.$store.commit($.mutations.APP_REMOVE_VIEWTAB, tabIndex);
         },
-        tabStyle(/** @type {ViewContext} */ viewTab) {
+        tabStyle(/** @type {import("../models/View").View} */ viewTab) {
             return `color: ${this.computeColor(viewTab.color)};background-color: white; border-right: 1px solid #d0d0d0;  border-top: 2px solid #d0d0d0; `;
         },
         loadView(/** @type {Number} */ tabIndex) {
-            return `view-${this.viewTabs[tabIndex].definition.type}`;
+            return `view-${this.viewTabs[tabIndex].type}`;
         },
         computeColor(/** @type {String} */ color) {
             if (!color)
@@ -76,31 +85,52 @@ export default {
                 return `var(--v-${color}-base)`;
             else
                 return color;
-        }
-    },
-    mounted() {
-        let self = this;
-        this._keyListener = function (/** @type {KeyboardEvent} */ e) {
+        },
+        keyListener(/** @type {KeyboardEvent} */ e) {
             //To handle VIEW REFRESH
             if ((e.key === "r" && (e.ctrlKey || e.metaKey)) || (e.keyCode === 116 && !e.ctrlKey && !e.metaKey)) { //CTRL+R or F5
                 e.preventDefault();
-                if (self.$refs.activeView)
-                    self.$refs.activeView[0].onRefresh();
+
+                const viewId = this.$$store.state.app.viewTabs[this.$$store.state.app.viewTabIndex]?.viewId;
+                if (viewId)
+                    EventBus.$emit(`view-${viewId}:refresh`);
             }
 
             //To handle VIEW SAVE
             if ((e.key === "s" && (e.ctrlKey || e.metaKey))) { //CTRL+S
                 e.preventDefault();
 
+                const viewId = this.$$store.state.app.viewTabs[this.$$store.state.app.viewTabIndex]?.viewId;
+                if (viewId)
+                    EventBus.$emit(`view-${viewId}:save`);
             }
-        };
 
-        document.addEventListener('keydown', this._keyListener.bind(this));
+            //To handle VIEW EXPORT
+            if ((e.key === "e" && (e.ctrlKey || e.metaKey))) { //CTRL+E
+                e.preventDefault();
+
+                const viewId = this.$$store.state.app.viewTabs[this.$$store.state.app.viewTabIndex]?.viewId;
+                if (viewId)
+                    EventBus.$emit(`view-${viewId}:export`);
+            }
+
+            //To handle VIEW SELECT ALL
+            if ((e.key === "a" && (e.ctrlKey || e.metaKey))) { //CTRL+A
+                e.preventDefault();
+
+                const viewId = this.$$store.state.app.viewTabs[this.$$store.state.app.viewTabIndex]?.viewId;
+                if (viewId)
+                    EventBus.$emit(`view-${viewId}:select-all`);
+            }
+        }
+    },
+    mounted() {
+        document.addEventListener('keydown', this.keyListener.bind(this));
         this.$store.dispatch($.actions.APP_EXEC_OPTIN);
 
     },
     beforeDestroy() {
-        document.removeEventListener('keydown', this._keyListener);
+        document.removeEventListener('keydown', this.keyListener);
     }
 }
 </script>

@@ -17,7 +17,7 @@ import { AppBanner } from "../models/AppBanner";
 
 Vue.use(Vuex);
 
-const initialState = {
+export const initialState = {
     app: {
         isReady: false,
         /** @type {import("../models/MenuItem").MenuItem[]} */
@@ -106,8 +106,8 @@ const store = new Vuex.Store({
          * @param {View} view
          */
         [$.mutations.APP_ADD_VIEWTAB](state, view) {
-            let index = state.app.viewTabs.push(view);
-            state.app.viewTabIndex = index - 1;
+            let arrayLength = state.app.viewTabs.push(view);
+            state.app.viewTabIndex = arrayLength - 1;
         },
         /**
          *
@@ -211,7 +211,7 @@ const store = new Vuex.Store({
                 }
 
                 context.commit($.mutations.APP_HIDE_BANNER);
-            } catch (/** @type {Error}*/ ex) {
+            } catch (ex) {
                 console.error(ex);
                 alert(ex.clientMessage || ex.message);
             }
@@ -238,7 +238,7 @@ const store = new Vuex.Store({
                 context.commit($.mutations.APP_SET_DRAWERITEMS, metaMenu.response);
 
                 Vuetify.framework.lang.current = context.state.app.user ? context.state.app.user.languageCode : "en";
-            } catch (/** @type {Error}*/ ex) {
+            } catch (ex) {
                 console.error(ex);
                 alert(ex.message);
             }
@@ -269,20 +269,30 @@ const store = new Vuex.Store({
          * @param {import("../models/OpenView").OpenView} openView
          */
         async [$.actions.APP_OPEN_VIEW](context, openView) {
-            let result = await RestApiService.get($api.GET_META_VIEW, {
-                viewName: openView.viewName,
-            });
+            try {
+                let result = await RestApiService.get(
+                    $api.GET_META_VIEW,
+                    {
+                        viewName: openView.viewName,
+                    },
+                    true
+                );
 
-            if (!result.hasError) {
+                /** @type {View} */
                 let view = Object.assign(new View(), result.response);
+                if (!view.type) throw new Error(`The view "${openView.viewName}" has type undefined!`);
+
                 view.entityId = openView.entityId;
                 view.readonly = openView.readonly;
                 if (!view.icon) view.icon = openView.icon;
                 if (!view.color) view.color = openView.color;
+                view.viewId = StringUtils.generateRandomString();
                 context.commit($.mutations.APP_ADD_VIEWTAB, view);
-            } else {
-                console.error(result.exception);
-                alert(result.clientMessage); //TODO: @michaelsogos -> show error page
+            } catch (err) {
+                window.logger.error(err.clientMessage || err.message, {
+                    title: context.getters[$.getters.APP_TRANSLATE_STRING]("view-not-found"),
+                    show: true,
+                });
             }
         },
         /**
@@ -291,15 +301,26 @@ const store = new Vuex.Store({
          * @param {String} viewName
          */
         async [$.actions.APP_CHANGE_VIEW](context, viewName) {
-            let result = await RestApiService.get($api.GET_META_VIEW, {
-                viewName,
-            });
+            try {
+                let result = await RestApiService.get(
+                    $api.GET_META_VIEW,
+                    {
+                        viewName,
+                    },
+                    true
+                );
 
-            if (!result.hasError) {
+                /** @type {View} */
                 const view = Object.assign(new View(), result.response);
+                if (!view.type) throw new Error(`The view "${viewName}" has type undefined!`);
+
+                view.viewId = StringUtils.generateRandomString();
                 context.commit($.mutations.APP_CHANGE_VIEWTAB, view);
-            } else {
-                window.logger.error(result.clientMessage, { title: context.getters[$.getters.APP_TRANSLATE_STRING]("view-not-found"), show: true });
+            } catch (err) {
+                window.logger.error(err.clientMessage || err.message, {
+                    title: context.getters[$.getters.APP_TRANSLATE_STRING]("view-not-found"),
+                    show: true,
+                });
             }
         },
         /**
@@ -423,7 +444,7 @@ const store = new Vuex.Store({
             /**
              *
              * @param {import("../models/Query").Query} query
-             * @returns {import("../models/QueryResult").QueryResult}
+             * @returns {Promise<import("../models/QueryResult").QueryResult>}
              */
             async (query) => {
                 let result = await RestApiService.post($api.POST_GET_DATA, query);
@@ -440,7 +461,7 @@ const store = new Vuex.Store({
             /**
              *
              * @param {import("../models/Query").Query} query
-             * @returns {Object}
+             * @returns {Promise<import("../models/UnknownEntity").UnknownEntity>}
              */
             async (query) => {
                 let result = await RestApiService.post($api.POST_GET_ENTITY, query);
@@ -457,7 +478,7 @@ const store = new Vuex.Store({
             /**
              *
              * @param {import("../models/Query").Query} query
-             * @returns {Object}
+             * @returns {Promise<import("../models/EntityInfo").EntityInfo>}
              */
             async (query) => {
                 let result = await RestApiService.post($api.POST_GET_RECORDINFO, query);

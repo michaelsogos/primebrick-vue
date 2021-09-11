@@ -5,7 +5,7 @@ const ViewAction = {
     DELETE: "delete",
     ARCHIVE: "archive",
     REFRESH: "refresh",
-    SHOW_ARCHIVED: "showArchived",
+    ARCHIVED_FILTER: "archivedFilter",
     RESTORE: "restore",
     SEARCH: "search",
     FILTER: "filter",

@@ -1,12 +1,14 @@
 {
-	"compilerOptions": {
-		"experimentalDecorators": true,
-		"target": "es2017",
-		"module": "commonJS",
-		"moduleResolution": "node",
-		"sourceMap": true,
-		"baseUrl": "./"
-	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "public"]
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "target": "es2017",
+        "module": "commonJS",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "baseUrl": "./",
+        "checkJs": true,
+        "noEmit": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist", "public"]
 }

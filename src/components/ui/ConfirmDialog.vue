@@ -44,16 +44,16 @@ export default {
     name: "h-confirm-dialog",
     methods: {
         onYesButtonClick() {
-            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
             this.$store.state.app.ui.confirmDialog.yesButtonCallback();
+            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
         },
         onNoButtonClick() {
-            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
             this.$store.state.app.ui.confirmDialog.noButtonCallback();
+            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
         },
         onOtherButtonClick() {
-            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
             this.$store.state.app.ui.confirmDialog.otherButtonCallback();
+            this.$store.commit($.mutations.APP_HIDE_CONFIRMDIALOG);
         },
         showButton(buttonName) {
             switch (buttonName) {

@@ -1,14 +1,13 @@
 import "./common/StringExtension";
 import Vue from "vue";
 import store from "./store";
+// @ts-ignore
 import App from "./App.vue";
 import vuetify from "./plugins/vuetify";
-// import "@babel/polyfill";
-// import "roboto-fontface/css/roboto/roboto-fontface.css";
-// import "@mdi/font/css/materialdesignicons.css";
 import "./assets/styles/index.scss";
 import "./plugins/componentRegister";
 import "./plugins/appLogger";
+import "./plugins/typedStore";
 
 import translate from "./plugins/filters/translate";
 Vue.filter(translate.name, translate.filter);

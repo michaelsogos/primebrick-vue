@@ -16,7 +16,7 @@ export class ViewGridHeader {
         this.width = null;
         /** @type {String} */
         this.class = null;
-        /** @type {import("../models/View").ViewFilterField} */
+        /** @type {import("../models/View").ViewFieldFilter} */
         this.columnFilter = null;
     }
 }

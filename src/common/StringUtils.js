@@ -114,4 +114,12 @@ export class StringUtils {
     static buildEntityName(template, record) {
         return template.interpolate(record);
     }
+
+    /**
+     * Generate random string
+     * @returns {String}
+     */
+    static generateRandomString() {
+        return Math.random().toString(36).substring(6);
+    }
 }

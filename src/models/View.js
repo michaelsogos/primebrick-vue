@@ -1,46 +1,72 @@
 export class View {
     constructor() {
+        //TODO: @mso -> For view that need an single entityId, instead place data here we should move it as specific PROPS of the view (eg: cards and grid don't need it)
         /** @type {Number} */
         this.entityId = null;
+        /** @type {("grid"| "form"| "cards")} */
+        this.type = null;
+        /** @type {String} */
+        this.version = null;
         /** @type {String} */
         this.name = null;
         /** @type {String} */
         this.labelKey = null;
         /** @type {String} */
-        this.entityNameLabelKey = null;
         /** @type {String} */
         this.icon = null;
         /** @type {String} */
         this.color = null;
-        /** @type {ViewGridDefinition | ViewFormDefinition} */
+        /** @type {String} */
+        this.brick = null;
+        /** @type {ViewEntity} */
+        this.entity = null;
+        /** @type {Boolean} */
+        this.showLogs = false;
+        /** @type {ViewGridDefinition & ViewFormDefinition & ViewCardsDefinition} */
         this.definition = null;
-        /** @type {ViewNameType[]} */
-        this.alternativeViews = [];
-        /** @type {ViewActions} */
-        this.actions = null;
-        /** @type {ViewOptions} */
-        this.options = null;
-        /** @type {ViewHighlighters[]} */
-        this.highlighters = [];
+        //TODO: @mso -> For view that need an READONLY flag, instead place data here we should move it as specific PROPS of the view (eg: cards and grid don't need it)
         /** @type {Boolean} */
         this.readonly = false;
+        /** @type {String} */
+        this.viewId = null;
+    }
+}
+
+export class ViewEntity {
+    constructor() {
+        /** @type {String} */
+        this.name = null;
+        /** @type {String} */
+        this.labelKey = null;
+        /** @type {String} */
+        this.recordNameTemplate = null;
     }
 }
 
 export class ViewDefinition {
     constructor() {
-        /** @type {String} */
-        this.brick = null;
-        /** @type {String} */
-        this.entity = null;
-        /** @type {String} */
-        this.type = null;
-        /** @type {String} */
-        this.entityNameTemplate = null;
         /** @type {String[]} */
         this.perms = [];
+    }
+}
+
+export class ViewListDefinition extends ViewDefinition {
+    constructor() {
+        super();
         /** @type {String} */
         this.showArchivedEntities = null;
+        /** @type {ViewFilter[]} */
+        this.filters = [];
+        /** @type {ViewSort[]} */
+        this.sorts = [];
+        /** @type {ViewOptions} */
+        this.options = null;
+        /** @type {ViewHighlighters[]} */
+        this.highlighters = [];
+        /** @type {ViewNameType[]} */
+        this.alternativeViews = [];
+        /** @type {ViewListActions} */
+        this.actions = null;
     }
 }
 
@@ -49,18 +75,28 @@ export class ViewFormDefinition extends ViewDefinition {
         super();
         /** @type {ViewContainer[]} */
         this.containers = [];
+        /** @type {ViewFormActions} */
+        this.actions = null;
     }
 }
 
-export class ViewGridDefinition extends ViewDefinition {
+export class ViewGridDefinition extends ViewListDefinition {
     constructor() {
         super();
-        /** @type {ViewField[]} */
+        /** @type {ViewColumnField[]} */
         this.fields = [];
-        /** @type {ViewFilter[]} */
-        this.filters = [];
-        /** @type {ViewSort[]} */
-        this.sorts = [];
+    }
+}
+
+export class ViewCardsDefinition extends ViewListDefinition {
+    constructor() {
+        super();
+        /** @type {ViewCardField[]} */
+        this.fields = [];
+        /** @type {ViewCardsActions} */
+        this.actions = null;
+        /** @type {ViewCardsOptions} */
+        this.options = null;
     }
 }
 
@@ -85,10 +121,78 @@ export class ViewField {
         this.perms = [];
         /** @type {String} */
         this.type = null;
+    }
+}
+
+export class ViewColumnField extends ViewField {
+    constructor() {
+        super();
+        /** @type {Boolean} */
+        this.isArchiveFlag = false;
         /** @type {Boolean} */
         this.hideColumn = false;
         /** @type {Boolean} */
+        this.disableSort = false;
+        /** @type {Boolean} */
+        this.disableGroup = false;
+    }
+}
+
+export class ViewCardField extends ViewField {
+    constructor() {
+        super();
+        /** @type {Boolean} */
         this.isArchiveFlag = false;
+        /** @type {ViewCardFieldLayout} */
+        this.layout = null;
+    }
+}
+
+export class ViewCardFieldLayout {
+    constructor() {
+        /** @type {Boolean} */
+        this.isTitle = false;
+        /** @type {Boolean} */
+        this.isSubTitle = false;
+        /** @type {Number} */
+        this.line = null;
+        /** @type {String[] & ("left"| "middle"|"right")[]} */
+        this.filling = [];
+        /** @type {("left"| "center"|"right")} */
+        this.align = null;
+        /** @type {Boolean} */
+        this.isChip = false;
+        /** @type {Boolean} */
+        this.hideLabel = false;
+        /** @type {Boolean} */
+        this.isBold = false;
+        /** @type {Boolean} */
+        this.isDetail = false;
+    }
+}
+
+export class ViewCardFieldFiller {
+    constructor() {
+        /** @type {Number} */
+        this.position = null;
+        /** @type {String } */
+        this.value = null;
+        /** @type {String } */
+        this.label = null;
+        /** @type {Number} */
+        this.columnSize = null;
+        /** @type {Number} */
+        this.columnOffset = null;
+        /** @type {String & ("left" | "right" | "center")} */
+        this.align = null;
+        /** @type {Boolean} */
+        this.isChip = false;
+        /** @type {Boolean} */
+        this.hideLabel = false;
+        /** @type {Boolean} */
+        this.isBold = false;
+        /** @type {Boolean} */
+        this.isCheckBox = false;
     }
 }
 
@@ -97,8 +201,6 @@ export class ViewContainerField extends ViewField {
         super();
         /** @type {Number} */
         this.cols = null;
-        /** @type {Boolean} */
-        this.require = false;
         /** @type {ViewValidation[]} */
         this.validationRules = [];
         /** @type {Boolean} */
@@ -117,7 +219,7 @@ export class ViewValidation {
 
 export class ViewFieldSelection {
     constructor() {
-        /** @type {Any} */
+        /** @type {any} */
         this.data = null;
         /** @type {Boolean} */
         this.hidden = false;
@@ -165,14 +267,111 @@ export class ViewFilter {
 
 export class ViewActions {
     constructor() {
-        this.open = {
-            /** @type {String} */
-            view: null,
+        this.delete = new ViewDeleteAction();
+        this.archive = new ViewDeleteAction();
+
+        this.refresh = {
             /** @type {Boolean} */
-            enableDoubleClick: false,
+            enableToolbarButton: false,
             /** @type {Boolean} */
-            enableRowButton: false,
+            enableMenuLink: false,
         };
+    }
+}
+
+export class ViewFilterAction {
+    constructor() {
+        /** @type {Boolean} */
+        this.enableHeader = false;
+        /** @type {Boolean} */
+        this.enableDialog = false;
+        /** @type {ViewFieldFilter[]} */
+        this.fields = [];
+    }
+}
+
+export class ViewSearchAction {
+    constructor() {
+        /** @type {Boolean} */
+        this.enableToolbarButton = false;
+        /** @type {String[]} */
+        this.fields = [];
+    }
+}
+
+export class ViewOpenAction {
+    constructor() {
+        /** @type {String} */
+        this.view = null;
+        /** @type {Boolean} */
+        this.enableDoubleClick = false;
+        /** @type {Boolean} */
+        this.enableItemButton = false;
+    }
+}
+
+export class ViewCardsOpenAction extends ViewOpenAction {
+    constructor() {
+        super();
+        /** @type {Boolean} */
+        this.enableTitleLink = false;
+    }
+}
+
+export class ViewAddAction {
+    constructor() {
+        /** @type {String} */
+        this.view = null;
+        /** @type {Boolean} */
+        this.enableToolbarButton = false;
+        /** @type {Boolean} */
+        this.enableFloatingButton = false;
+        /** @type {Boolean} */
+        this.enableMenuLink = false;
+    }
+}
+
+export class ViewArchivedFilterAction {
+    constructor() {
+        /** @type {Boolean} */
+        this.enableToolbarButton = false;
+    }
+}
+
+export class ViewDeleteAction {
+    constructor() {
+        /** @type {Boolean} */
+        this.enableToolbarButton = false;
+        /** @type {Boolean} */
+        this.enableMenuLink = false;
+    }
+}
+
+export class ViewListDeleteAction extends ViewDeleteAction {
+    constructor() {
+        super();
+        /** @type {Boolean} */
+        this.enableItemButton = false;
+    }
+}
+
+export class ViewListActions extends ViewActions {
+    constructor() {
+        super();
+        this.open = new ViewOpenAction();
+        this.edit = new ViewOpenAction();
+        this.add = new ViewAddAction();
+        this.delete = new ViewListDeleteAction();
+        this.archivedFilter = new ViewArchivedFilterAction();
+        this.restore = new ViewListDeleteAction();
+        this.search = new ViewSearchAction();
+        this.filter = new ViewFilterAction();
+    }
+}
+
+export class ViewFormActions extends ViewActions {
+    constructor() {
+        super();
 
         this.save = {
             /** @type {Boolean} */
@@ -181,102 +380,33 @@ export class ViewActions {
             enableMenuLink: false,
         };
 
-        this.edit = {
-            //-- FOR GRID
-            /** @type {String} */
-            view: null,
-            /** @type {Boolean} */
-            enableDoubleClick: false,
-            /** @type {Boolean} */
-            enableRowButton: false,
-            //-- FOR FORM
+        this.info = {
             /** @type {Boolean} */
             enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.add = {
-            /** @type {String} */
-            view: null,
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableFloatingButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.delete = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableRowButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.archive = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableRowButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.refresh = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.search = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {String[]} */
-            fields: [],
-        };
-
-        this.filter = {
-            /** @type {Boolean} */
-            enableColumns: false,
-            /** @type {Boolean} */
-            enableDialog: false,
-            /** @type {ViewFilterField[]} */
-            fields: [],
-        };
-
-        this.showArchived = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableMenuLink: false,
-        };
-
-        this.restore = {
-            /** @type {Boolean} */
-            enableToolbarButton: false,
-            /** @type {Boolean} */
-            enableRowButton: false,
             /** @type {Boolean} */
             enableMenuLink: false,
         };
     }
 }
 
-export class ViewFilterField {
+export class ViewCardsActions extends ViewListActions {
+    constructor() {
+        super();
+        this.open = new ViewCardsOpenAction();
+    }
+}
+
+export class ViewFieldFilter {
     constructor() {
         /** @type {String} */
         this.field = null;
         /** @type {String} */
         this.type = null;
-        /** @type {String} The query expression value*/
+        /** @type {String | string[]} The query expression value*/
         this.value = null;
         /** @type {String} The query expression operator (=, LIKE, etc.)*/
         this.operator = null;
-        /** @type {ViewFilterFieldListOptions} */
+        /** @type {ViewFieldFilterListOptions} */
         this.listOptions = null;
         /** @type {String} */
         this.label = null;
@@ -294,8 +424,18 @@ export class ViewOptions {
     constructor() {
         /** @type {Boolean} */
         this.enableMultiSelect = false;
+        /** @type {Number} */
+        this.itemsPerPage = 20;
+    }
+}
+
+export class ViewCardsOptions extends ViewOptions {
+    constructor() {
+        super();
         /** @type {Boolean} */
-        this.showLogs = false;
+        this.enableRecordNameAsTitle = false;
+        /** @type {Boolean} */
+        this.enableRecordNameAsSubTitle = false;
     }
 }
 
@@ -316,27 +456,29 @@ export class ViewHighlighters {
     }
 }
 
-export class ViewFilterFieldListOptions {
+export class ViewFieldFilterListOptions {
     constructor() {
         /** @type {Boolean} */
         this.enableMultiSelection = null;
-        /** @type {ViewFilterFieldListValue[]} */
+        /** @type {ViewFieldFilterListValue[]} */
         this.values = [];
-        /** @type {ViewFilterFieldListQuery} */
+        /** @type {ViewFieldFilterListQuery} */
         this.query = null;
     }
 }
 
-export class ViewFilterFieldListValue {
+export class ViewFieldFilterListValue {
     constructor() {
         /** @type {String} */
         this.labelKey = null;
         /** @type {any} */
         this.value = null;
+        /** @type {String} */
+        this.text = null;
     }
 }
 
-export class ViewFilterFieldListQuery {
+export class ViewFieldFilterListQuery {
     constructor() {
         /** @type {String} */
         this.brick = null;
@@ -352,12 +494,12 @@ export class ViewFilterFieldListQuery {
         this.loading = false;
         /** @type {String[]} */
         this.searchFields = [];
-        /** @type {ViewFilterFieldListQueryResultItem[]} */
+        /** @type {ViewFieldFilterListQueryResultItem[]} */
         this.queryResultItems = [];
         /** @type {Number} */
         this.queryResultCount = null;
-        /** @type {Boolean} */
-        this.showArchivedEntities = false;
+        /** @type {String} */
+        this.showArchivedEntities = null;
         /** @type {ViewFilter[]} */
         this.filters = [];
         /** @type {ViewSort[]} */
@@ -367,7 +509,7 @@ export class ViewFilterFieldListQuery {
     }
 }
 
-export class ViewFilterFieldListQueryResultItem {
+export class ViewFieldFilterListQueryResultItem {
     constructor() {
         /** @type {String} */
         this.text = null;

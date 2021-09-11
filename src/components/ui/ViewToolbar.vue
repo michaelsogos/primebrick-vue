@@ -48,7 +48,7 @@
         </v-chip>
         <v-spacer></v-spacer>
         <v-select
-            v-if="checkToolbarButtonVisibility(ViewAction.SHOW_ARCHIVED)"
+            v-if="checkToolbarButtonVisibility(ViewAction.ARCHIVED_FILTER)"
             hide-details
             solo
             flat
@@ -88,17 +88,11 @@
             </template>
         </v-text-field>
         <v-spacer></v-spacer>
-        <v-btn-toggle
-            v-if="view.alternativeViews && view.alternativeViews.length > 0"
-            :value="0"
-            group
-            :color="computeColor(view.color)"
-            class="pa-0 ma-0"
-        >
-            <v-btn :title="$options.filters.translate(`view-type-${view.definition.type}`)" class="ma-0 pa-0">
-                <v-icon>{{ getViewIcon(view.definition.type) }}</v-icon>
+        <v-btn-toggle v-if="alternativeViews.length > 0" :value="0" group :color="computeColor(view.color)" class="pa-0 ma-0">
+            <v-btn :title="$options.filters.translate(`view-type-${view.type}`)" class="ma-0 pa-0">
+                <v-icon>{{ getViewIcon(view.type) }}</v-icon>
             </v-btn>
-            <template v-for="item in view.alternativeViews">
+            <template v-for="item in alternativeViews">
                 <v-btn
                     :key="item.type"
                     :title="$options.filters.translate(`view-type-${item.type}`)"
@@ -159,12 +153,14 @@ export default {
                 }
             ],
             showArchivedSelectedOption: this.view.definition.showArchivedEntities,
-            ViewAction
+            ViewAction,
+            /** @type {import("../../models/View").ViewNameType[]} */
+            alternativeViews: []
         };
     },
     methods: {
         onAddItem() {
-            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.actions.add.view, null));
+            this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.definition.actions.add.view, null));
         },
         onOpenLink(/** @type {{ labelKey: String, view: String, action: String, icon: String }} */link) {
             switch (link.action) {
@@ -195,13 +191,13 @@ export default {
         },
         /** @returns {Boolean} */
         checkToolbarButtonVisibility(/** @type {string} */ actionName) {
-            const isVisible = this.view.actions && this.view.actions[actionName] && this.view.actions[actionName].enableToolbarButton == true;
+            const isVisible = this.view?.definition?.actions ? this.view?.definition?.actions[actionName]?.enableToolbarButton : false;
 
             switch (actionName) {
                 case ViewAction.SAVE:
                     return !this.view.readonly && isVisible;
                 case ViewAction.EDIT: {
-                    const isSaveEnable = this.view.actions && this.view.actions.save && this.view.actions.save.enableToolbarButton == true;
+                    const isSaveEnable = this.view?.definition?.actions?.save?.enableToolbarButton || false;
                     return this.view.readonly && isSaveEnable;
                 }
                 case ViewAction.DELETE:
@@ -212,7 +208,7 @@ export default {
                     return isVisible && this.view.definition.showArchivedEntities != 'none';
                 }
                 case ViewAction.FILTER: {
-                    return this.view.actions && this.view.actions.filter && this.view.actions.filter.enableDialog == true;
+                    return this.view?.definition?.actions?.filter?.enableDialog || false;
                 }
                 default:
                     return isVisible;
@@ -236,8 +232,8 @@ export default {
         /** @returns {Boolean} */
         checkMenuVisibility() {
             let showMenu = false;
-            for (const action in this.view.actions) {
-                if (this.view.actions[action].enableMenuLink == true) {
+            for (const action in this.view.definition.actions) {
+                if (this.view.definition.actions[action].enableMenuLink == true) {
                     showMenu = true;
                     break;
                 }
@@ -248,12 +244,12 @@ export default {
         /** @returns {{ labelKey: String, view: String, action: String, icon: String }[]} */
         getMenuLink() {
             const links = [];
-            for (const action in this.view.actions) {
+            for (const action in this.view.definition.actions) {
                 let realAction = action;
                 let labelKey = action;
-                let view = this.view.actions[action].view;
+                let view = this.view.definition.actions[action].view;
 
-                if (this.view.actions[action].enableMenuLink == true) {
+                if (this.view.definition.actions[action].enableMenuLink == true) {
                     switch (action) {
                         case ViewAction.SAVE:
                             if (this.view.readonly) {
@@ -266,7 +262,7 @@ export default {
                             labelKey = 'new';
                             break;
                         case ViewAction.EDIT:
-                            if (!this.view.actions.save || !this.view.actions.save.enableMenuLink) continue;
+                            if (!this.view.definition.actions.save || !this.view.definition.actions.save.enableMenuLink) continue;
                             break;
                         case ViewAction.DELETE:
                         case ViewAction.ARCHIVE: if (this.view.definition.showArchivedEntities == 'only') continue;
@@ -308,6 +304,9 @@ export default {
             this.$store.dispatch($.actions.APP_CHANGE_VIEW, viewName);
 
         }
+    },
+    mounted() {
+        this.alternativeViews = this.view?.definition?.alternativeViews || [];
     }
 };
 </script>

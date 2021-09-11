@@ -35,13 +35,13 @@ export default {
     name: "h-view-log",
     data: function () {
         return {
-            /** @type {import("../../models/MenuItem").MenuItem[]*/
+            /** @type {Boolean}*/
             showTable: false
         };
     },
     methods: {
         /** 
-         * @param {Number}
+         * @param {Number} severity
          */
         chipColor(severity) {
             switch (severity) {
@@ -61,7 +61,7 @@ export default {
             }
         },
         /** 
-         * @param {Number}
+         * @param {Number} severity
          */
         chipIcon(severity) {
             switch (severity) {
