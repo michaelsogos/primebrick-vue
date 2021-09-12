@@ -53,7 +53,7 @@ export class ViewDefinition {
 export class ViewListDefinition extends ViewDefinition {
     constructor() {
         super();
-        /** @type {String} */
+        /** @type {String & ("none"|"only"|"also")} */
         this.showArchivedEntities = null;
         /** @type {ViewFilter[]} */
         this.filters = [];
@@ -411,12 +411,17 @@ export class ViewFieldFilter {
         /** @type {String} */
         this.label = null;
         //TODO: @mso -> This should be used instead of $refs
-        this.viewModel = {
-            /** @type {String|String[]} */
-            selectedValue: null,
-            /** @type {String} */
-            selectedOperator: null,
-        };
+        /** @type {ViewFieldFilterViewModel} */
+        this.viewModel = null;
+    }
+}
+
+export class ViewFieldFilterViewModel {
+    constructor() {
+        /** @type {String|String[]} */
+        this.selectedValue = null;
+        /** @type {String} */
+        this.selectedOperator = null;
     }
 }
 
@@ -498,7 +503,7 @@ export class ViewFieldFilterListQuery {
         this.queryResultItems = [];
         /** @type {Number} */
         this.queryResultCount = null;
-        /** @type {String} */
+        /** @type {String & ('none' | 'only' | 'also')} */
         this.showArchivedEntities = null;
         /** @type {ViewFilter[]} */
         this.filters = [];

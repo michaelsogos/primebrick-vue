@@ -1,6 +1,6 @@
 <template>
     <v-container fluid fill-height class="pa-0 ma-0 align-content-start flex-grow-1 flex-shrink-0">
-        <h-panel>
+        <h-panel class="grey lighten-4">
             <template v-slot:header>
                 <h-view-toolbar
                     :view="view"
@@ -47,7 +47,8 @@
                 :loadFilterItems="onLoadFilterItems"
                 :enableMultiSelect="getEnableMultiSelectOption"
                 :itemsPerPage="getItemsPerPageOption"
-                :filterFields="dialogFilterFields"
+                :filterFields="getFilterFields"
+                :stringFieldOperators="getStringFieldOperator"
             >
                 <h1>SLOT DATAVIEW IS EMPTY!</h1>
             </slot>
@@ -103,7 +104,7 @@
                                 outlined
                                 dense
                                 :label="translate('select-field')"
-                                :items="dialogFilterFields"
+                                :items="getFilterFields"
                                 item-text="label"
                                 return-object
                                 v-model="dialogFiltersSelectedField"
@@ -234,7 +235,7 @@
 
 <script>
 import $ from "../../store/types";
-import { View, ViewFilter, ViewFieldFilter, ViewSort, ViewFieldFilterListQueryResultItem } from "../../models/View";
+import { View, ViewFilter, ViewFieldFilter, ViewSort, ViewFieldFilterListQueryResultItem, ViewFieldFilterViewModel } from "../../models/View";
 import { Query } from '../../models/Query';
 import { OpenView } from '../../models/OpenView';
 import { ConfirmDialog } from "../../models/ConfirmDialog";
@@ -286,12 +287,20 @@ export default {
     },
     computed: {
         /** @return {ViewFieldFilter[]} */
-        dialogFilterFields() {
+        getFilterFields() {
             if (this.view.definition?.actions?.filter)
                 for (const filter of this.view.definition.actions.filter.fields) {
                     const fieldLabelKey = this.view.definition.fields.find((f) => f.name == filter.field).labelKey;
                     if (fieldLabelKey)
                         filter.label = this.$options.filters.translate(fieldLabelKey);
+
+                    if (filter && filter.type == 'list' && Array.isArray(filter.listOptions.values)) {
+                        for (const value of filter.listOptions.values)
+                            value.text = this.$options.filters.translate(value.labelKey);
+                    }
+
+
+                    filter.viewModel = new ViewFieldFilterViewModel();
                 }
 
             return this.view.definition?.actions?.filter?.fields || [];
@@ -390,7 +399,7 @@ export default {
             this.viewSearchTerm = searchTerm;
             this.loadData();
         },
-        onShowArchived(/** @type {String} */ option) {
+        onShowArchived(/** @type {("none"|"only"|"also")} */ option) {
             this.showArchivedEntities = option;
             this.onRefresh();
         },
@@ -625,10 +634,12 @@ export default {
                 columnFilter.expressionValues = {};
 
                 for (const filterField of this.viewFieldFilters) {
-                    if (filterField.operator == 'IN')
-                        columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter)`);
-                    else
+                    if (filterField.operator == 'IN') {
+                        if (Array.isArray(filterField.value) && filterField.value.length > 0)
+                            columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter)`);
+                    } else
                         columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
+
                     columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
                 }
 
@@ -671,6 +682,7 @@ export default {
         */
         async onLoadFilterItems(searchTerm, filter) {
             filter.listOptions.query.loading = true;
+            // filter.listOptions.query = Object.assign(new ViewFieldFilterListQuery, filter.listOptions.query);
 
             const query = new Query();
             query.brick = filter.listOptions.query.brick;

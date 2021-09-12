@@ -2,12 +2,25 @@
     <view-list-base
         :view="view"
         :viewSelectedRows="viewSelectedRows"
+        :viewFieldFilters="viewFieldFilters"
         @onDataLoaded="onDataLoaded"
         @onDataLoading="viewDataLoading = true"
         @onSelectAll="onSelectAll"
         @onReset="onReset"
     >
-        <template v-slot:dataview="{ sortField, sortDescendant, changePage, pageNumber, enableMultiSelect, itemsPerPage }">
+        <template
+            v-slot:dataview="{
+                sortField,
+                sortDescendant,
+                changePage,
+                pageNumber,
+                enableMultiSelect,
+                itemsPerPage,
+                filterFields,
+                stringFieldOperators,
+                loadFilterItems,
+            }"
+        >
             <v-data-iterator
                 :items="getItems"
                 item-key="id"
@@ -22,24 +35,48 @@
                 @update:page="changePage"
                 @update:sort-by="sortField"
                 @update:sort-desc="sortDescendant"
-                :loading="viewDataLoading"
                 :single-select="enableMultiSelect"
                 v-model="viewSelectedRows"
-                class="pa-4 d-flex grey lighten-4 flex-column data-iterator-fixed-footer"
+                class="pa-4 d-flex flex-column data-iterator-fixed-footer"
                 light
                 :sort-desc.sync="viewSortingDesc"
             >
                 <template v-slot:header="{ sort }">
                     <v-toolbar dense class="header" elevation="0" color="white">
+                        <v-progress-linear
+                            :active="viewDataLoading"
+                            :indeterminate="true"
+                            absolute
+                            bottom
+                            height="2"
+                            color="tertiary"
+                        ></v-progress-linear>
+
+                        <v-checkbox
+                            :label="$options.filters.translate('select-all')"
+                            hide-details
+                            class="mr-4"
+                            color="tertiary"
+                            @change="onSelectAll"
+                            :value="viewData && viewData.data.length == viewSelectedRows.length"
+                        ></v-checkbox>
+
+                        <v-divider
+                            vertical
+                            class="tertiary"
+                            inset
+                            v-if="getFilterHeaderEnabled && filterFields && filterFields.length > 0"
+                        ></v-divider>
+
                         <v-select
                             hide-details
                             solo
                             flat
-                            class="filter-input"
+                            class="ml-2 filter-input"
                             dense
                             prepend-icon="mdi-sort-alphabetical-variant"
                             single-line
-                            :label="$options.filters.translate('select-field')"
+                            :label="$options.filters.translate('select-field-to-sort')"
                             color="tertiary"
                             :items="getSortFields()"
                             item-text="label"
@@ -54,20 +91,158 @@
                             flat
                             dense
                             single-line
-                            :label="$options.filters.translate('select-field')"
+                            :label="$options.filters.translate('direction')"
                             :menu-props="{ offsetY: true, rounded: '0' }"
                             v-model="viewSortingDesc"
                             color="tertiary"
                             :items="sortDirections"
                             style="max-width: 250px"
-                            class="mr-1"
+                            class="mr-2"
                         ></v-select>
-                        <v-divider vertical></v-divider>
-                        <v-spacer></v-spacer>
 
-                        <v-btn icon>
-                            <v-icon>mdi-magnify</v-icon>
-                        </v-btn>
+                        <v-divider
+                            vertical
+                            class="tertiary"
+                            inset
+                            v-if="getFilterHeaderEnabled && filterFields && filterFields.length > 0"
+                        ></v-divider>
+
+                        <v-select
+                            hide-details
+                            solo
+                            flat
+                            dense
+                            class="ml-2 filter-input"
+                            prepend-icon="mdi-filter"
+                            single-line
+                            :label="$options.filters.translate('select-field-to-filter')"
+                            color="tertiary"
+                            :items="filterFields"
+                            item-text="label"
+                            :menu-props="{ offsetY: true, rounded: '0' }"
+                            style="max-width: 250px"
+                            return-object
+                            v-model="viewSelectedFieldFilter"
+                            v-if="getFilterHeaderEnabled && filterFields && filterFields.length > 0"
+                        ></v-select>
+
+                        <v-toolbar-items v-if="viewSelectedFieldFilter" style="height: auto !important">
+                            <v-select
+                                hide-details
+                                solo
+                                flat
+                                dense
+                                class="filter-input"
+                                single-line
+                                :label="$options.filters.translate('select-operator')"
+                                color="tertiary"
+                                :items="stringFieldOperators()"
+                                :menu-props="{ offsetY: true, rounded: '0' }"
+                                style="max-width: 250px"
+                                v-model="viewSelectedFieldFilter.viewModel.selectedOperator"
+                                v-if="viewSelectedFieldFilter.type == 'string'"
+                                @change="onFilterField"
+                            ></v-select>
+
+                            <v-text-field
+                                hide-details
+                                solo
+                                flat
+                                dense
+                                clearable
+                                class="filter-input"
+                                single-line
+                                :label="$options.filters.translate('type-value')"
+                                color="tertiary"
+                                type="text"
+                                style="max-width: 250px"
+                                v-if="viewSelectedFieldFilter.type == 'string'"
+                                v-model="viewSelectedFieldFilter.viewModel.selectedValue"
+                                @change="onFilterField"
+                            ></v-text-field>
+                            <template v-if="viewSelectedFieldFilter.type == 'list'">
+                                <v-autocomplete
+                                    hide-details
+                                    solo
+                                    flat
+                                    dense
+                                    clearable
+                                    deletable-chips
+                                    single-line
+                                    class="filter-input"
+                                    :label="$options.filters.translate('select-value')"
+                                    color="tertiary"
+                                    :items="viewSelectedFieldFilter.listOptions.values"
+                                    item-color="tertiary"
+                                    :multiple="viewSelectedFieldFilter.listOptions.enableMultiSelection"
+                                    :small-chips="viewSelectedFieldFilter.listOptions.enableMultiSelection"
+                                    :menu-props="{ closeOnClick: true }"
+                                    style="max-width: 250px"
+                                    v-model="viewSelectedFieldFilter.viewModel.selectedValue"
+                                    v-if="viewSelectedFieldFilter.listOptions.values"
+                                    @blur="onFilterField"
+                                ></v-autocomplete>
+                                <v-autocomplete
+                                    hide-details
+                                    solo
+                                    flat
+                                    dense
+                                    clearable
+                                    deletable-chips
+                                    single-line
+                                    class="filter-input"
+                                    :append-icon="viewSelectedFieldFilter.listOptions.query.error ? 'mdi-cancel' : '$dropdown'"
+                                    :label="$options.filters.translate('select-value')"
+                                    :color="viewSelectedFieldFilter.listOptions.query.error ? 'error' : 'tertiary'"
+                                    :items="viewSelectedFieldFilter.listOptions.query.queryResultItems"
+                                    item-color="tertiary"
+                                    :loading="viewSelectedFieldFilter.listOptions.query.loading"
+                                    @update:search-input="loadFilterItems($event, viewSelectedFieldFilter)"
+                                    :multiple="viewSelectedFieldFilter.listOptions.enableMultiSelection"
+                                    :small-chips="viewSelectedFieldFilter.listOptions.enableMultiSelection"
+                                    :menu-props="{ closeOnClick: true }"
+                                    v-model="viewSelectedFieldFilter.viewModel.selectedValue"
+                                    v-if="viewSelectedFieldFilter.listOptions.query"
+                                    @blur="onFilterField"
+                                >
+                                    <template v-slot:no-data>
+                                        <v-list-item>
+                                            <v-list-item-content>
+                                                <v-list-item-title
+                                                    :class="[viewSelectedFieldFilter.listOptions.query.error ? 'error--text' : 'tertiary--text']"
+                                                >
+                                                    {{
+                                                        (viewSelectedFieldFilter.listOptions.query.error ? "query-error" : "no-data-message")
+                                                            | translate
+                                                    }}
+                                                </v-list-item-title>
+                                            </v-list-item-content>
+                                        </v-list-item>
+                                    </template>
+
+                                    <template v-slot:append-item>
+                                        <div
+                                            v-if="
+                                                viewSelectedFieldFilter.listOptions.query.queryResultItems &&
+                                                viewSelectedFieldFilter.listOptions.query.queryResultItems.length > 10
+                                            "
+                                            class="caption text-end px-4 tertiary--text"
+                                        >
+                                            {{
+                                                "count-items-found" | translate({ count: viewSelectedFieldFilter.listOptions.query.queryResultCount })
+                                            }}
+                                        </div>
+                                    </template>
+                                </v-autocomplete>
+                            </template>
+                        </v-toolbar-items>
+
+                        <v-divider
+                            vertical
+                            class="tertiary"
+                            inset
+                            v-if="getFilterHeaderEnabled && filterFields && filterFields.length > 0"
+                        ></v-divider>
                         <v-spacer></v-spacer>
 
                         <v-btn icon>
@@ -79,12 +254,25 @@
                         </v-btn>
                     </v-toolbar>
                 </template>
-                <template v-slot:default="{ items, isExpanded, expand }">
+
+                <template v-slot:default="{ items, isExpanded, expand, isSelected, select }">
                     <v-row class="flex-shrink-0">
                         <v-col v-for="item in items" :key="item.name" cols="12" sm="6" md="4" lg="3">
                             <v-card>
-                                <v-card-title class="tertiary--text">
-                                    {{ getTitle(item) }}
+                                <v-card-title class="tertiary--text align-start">
+                                    <div class="col-6 pa-0">{{ getTitle(item) }}</div>
+                                    <div class="col-6 pa-0 d-flex flex-row-reverse">
+                                        <v-checkbox
+                                            hide-details
+                                            class="ma-0 no-margin"
+                                            :value="isSelected(item)"
+                                            @change="(v) => select(item, v)"
+                                            on-icon="mdi-checkbox-marked-circle-outline"
+                                            off-icon="mdi-checkbox-blank-circle-outline"
+                                            color="tertiary"
+                                        ></v-checkbox>
+                                        <div v-if="isSelected(item)" class="corner-triangle-top-right"></div>
+                                    </div>
                                 </v-card-title>
                                 <v-card-subtitle>
                                     {{ getSubtitle(item) }}
@@ -215,7 +403,11 @@ export default {
                     text: "Descending",
                     value: [true]
                 }
-            ]
+            ],
+            /** @type {import("../../models/View").ViewFieldFilter} */
+            viewSelectedFieldFilter: null,
+            /** @type {import("../../models/View").ViewFieldFilter[]} */
+            viewFieldFilters: [],
         };
     },
     computed: {
@@ -259,6 +451,10 @@ export default {
         /** @returns {Boolean} */
         getHasExpanded() {
             return this.view.definition.fields.some((/** @type {import("../../models/View").ViewCardField} */ f) => (f.layout?.isDetail || false));
+        },
+        /** @returns {Boolean} */
+        getFilterHeaderEnabled() {
+            return this.view.definition?.actions?.filter?.enableHeader;
         }
     },
     methods: {
@@ -382,7 +578,50 @@ export default {
             }
 
             return fields;
-        }
+        },
+        onFilterField() {
+            this.viewSelectedRows.splice(0);
+
+            const selectedValue = this.viewSelectedFieldFilter?.viewModel?.selectedValue;
+
+            if (selectedValue) {
+                if (this.viewSelectedFieldFilter.type == "list") {
+                    if (Array.isArray(selectedValue)) {
+                        this.viewSelectedFieldFilter.viewModel.selectedOperator = "IN";
+                    }
+                    else {
+                        this.viewSelectedFieldFilter.viewModel.selectedOperator = "EQUALS";
+                    }
+                }
+
+                switch (this.viewSelectedFieldFilter.viewModel.selectedOperator) {
+                    case "CONTAINS":
+                        this.viewSelectedFieldFilter.value = `%${selectedValue}%`;
+                        this.viewSelectedFieldFilter.operator = 'LIKE';
+                        break;
+                    case "STARTSWITH":
+                        this.viewSelectedFieldFilter.value = `${selectedValue}%`;
+                        this.viewSelectedFieldFilter.operator = 'LIKE';
+                        break;
+                    case "ENDSWITH":
+                        this.viewSelectedFieldFilter.value = `%${selectedValue}`;
+                        this.viewSelectedFieldFilter.operator = 'LIKE';
+                        break;
+                    case "EQUALS":
+                        this.viewSelectedFieldFilter.value = `${selectedValue}`;
+                        this.viewSelectedFieldFilter.operator = '=';
+                        break;
+                    case "IN":
+                        this.viewSelectedFieldFilter.value = selectedValue;
+                        this.viewSelectedFieldFilter.operator = 'IN';
+                        break;
+                }
+
+                this.viewFieldFilters.splice(0, this.viewFieldFilters.length, this.viewSelectedFieldFilter);
+            }
+            else
+                this.viewFieldFilters.splice(0);
+        },
     }
 }
 </script>
@@ -416,5 +655,17 @@ export default {
 
 .theme--light .v-data-iterator .v-data-footer {
     border-top: thin solid rgba(0, 0, 0, 0.12);
+}
+
+.corner-triangle-top-right {
+    width: 0;
+    height: 0;
+    border-top: 15px solid var(--v-tertiary-base);
+    border-left: 15px solid transparent;
+    border-right: 15px solid var(--v-tertiary-base);
+    border-bottom: 15px solid transparent;
+    position: absolute;
+    top: 0;
+    right: 0;
 }
 </style>

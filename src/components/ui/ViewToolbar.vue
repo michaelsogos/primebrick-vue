@@ -152,7 +152,7 @@ export default {
                     value: 'only'
                 }
             ],
-            showArchivedSelectedOption: this.view.definition.showArchivedEntities,
+            showArchivedSelectedOption: this.view.definition.showArchivedEntities || 'none',
             ViewAction,
             /** @type {import("../../models/View").ViewNameType[]} */
             alternativeViews: []

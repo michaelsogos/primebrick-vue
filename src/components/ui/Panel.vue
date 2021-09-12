@@ -5,31 +5,53 @@
                 <h1>Panel Header</h1>
             </slot>
         </div>
-        <div class="h-panel-body">
-            <slot>
+        <div class="h-panel-body" :class="bodyClass">
+            <slot :class="bodyClass">
                 Panel Body
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />a
-                <br />End of Body
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                a
+                <br />
+                End of Body
             </slot>
         </div>
         <div class="h-panel-footer">
@@ -46,6 +68,7 @@ export default {
     data: function () {
         return {
 
+            bodyClass: null
         };
     },
 }
