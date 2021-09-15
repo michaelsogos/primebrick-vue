@@ -393,6 +393,7 @@ export class ViewCardsActions extends ViewListActions {
     constructor() {
         super();
         this.open = new ViewCardsOpenAction();
+        this.edit = new ViewCardsOpenAction();
     }
 }
 

@@ -20,6 +20,9 @@ declare global {
 declare module "vue/types/vue" {
     interface Vue {
         $$store: Store<StoreState>;
+        $$refs: {
+            form: any;
+        };
     }
 }
 

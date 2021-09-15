@@ -6,3 +6,10 @@ Object.defineProperty(Vue.prototype, "$$store", {
     },
     enumerable: true,
 });
+
+Object.defineProperty(Vue.prototype, "$$refs", {
+    get: function () {
+        return this.$refs;
+    },
+    enumerable: true,
+});

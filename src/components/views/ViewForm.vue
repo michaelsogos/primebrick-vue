@@ -37,7 +37,7 @@
                             cols="12"
                             :lg="item.cols || 12"
                             :key="index"
-                            :class="['px-2', 'mt-2', index != getContainers.length - 1 ? 'mb-2' : 'mb-0']"
+                            :class="['pr-2', 'mt-2', index != getContainers.length - 1 ? 'mb-2' : 'mb-0']"
                         >
                             <v-card class="pa-4">
                                 <v-row>
@@ -208,8 +208,8 @@ export default {
         getNotValidFields() {
             const fields = [];
 
-            if (this.$refs.form)
-                for (const input of this.$refs.form.inputs) {
+            if (this.$$refs.form)
+                for (const input of this.$$refs.form.inputs) {
                     if (!input.$data.valid) {
                         fields.push({
                             name: input.$props.label,
@@ -294,7 +294,7 @@ export default {
                 this.viewData = await this.$store.getters[$.getters.APP_GET_RECORD](query);
             }
 
-            setTimeout(() => this.$refs.form.validate(), 0);
+            setTimeout(() => this.$$refs.form.validate(), 0);
         },
         checkIsSaveEnable() {
             if (!this.viewDefinition.actions || !this.viewDefinition.actions.save) this.readonly = true;

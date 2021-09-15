@@ -137,6 +137,7 @@ export default {
     },
     data: function () {
         return {
+            /** @type {String} */
             viewSearchTerm: null,
             showArchivedOptions: [
                 {

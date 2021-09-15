@@ -38,11 +38,12 @@
                 :changePage="onPageChange"
                 :sortField="onSortField"
                 :sortDescendant="onSortDescendant"
-                :doubleClickRow="onDoubleClickRow"
+                :doubleClickItem="onDoubleClickItem"
+                :clickItemFieldValue="onClickItemFieldValue"
                 :openItem="onOpenItem"
                 :editItem="onEditItem"
-                :clickRow="onClickRow"
-                :showRowButton="checkRowButtonVisibility"
+                :clickItem="onClickItem"
+                :showItemButton="checkItemButtonVisibility"
                 :pageNumber="viewDataPageNumber"
                 :loadFilterItems="onLoadFilterItems"
                 :enableMultiSelect="getEnableMultiSelectOption"
@@ -320,7 +321,7 @@ export default {
          * @param {import("../../models/UnknownEntity").UnknownEntity} item
          * @return {Boolean}
          */
-        checkRowButtonVisibility(actionName, item) {
+        checkItemButtonVisibility(actionName, item) {
             const isVisible = this.view.definition?.actions[actionName]?.enableItemButton || false;
             const archiveFlagFieldName = this.view.definition.fields.find((f) => { return f.isArchiveFlag; }).name;
             const isItemArchived = archiveFlagFieldName ? item[archiveFlagFieldName] : false;
@@ -375,15 +376,23 @@ export default {
             const context = item || this.viewSelectedRows[0];
             this.$store.dispatch($.actions.APP_OPEN_VIEW, OpenView.fromView(this.view, this.view.definition.actions.edit.view, context.id));
         },
-        onDoubleClickRow(/** @type {Event}*/event, row) {
+        onDoubleClickItem(/** @type {Event}*/event, context) {
             event.stopPropagation();
 
             if (this.view.definition?.actions?.open?.enableDoubleClick)
-                this.onOpenItem(row.item);
+                this.onOpenItem(context.item);
             else if (this.view.definition?.actions?.edit?.enableDoubleClick)
-                this.onEditItem(row.item);
+                this.onEditItem(context.item);
         },
-        onClickRow(rowData, item) {
+        onClickItemFieldValue(/** @type {Event}*/event, context) {
+            event.stopPropagation();
+
+            if (this.view.definition?.actions?.open?.enableTitleLink)
+                this.onOpenItem(context.item);
+            else if (this.view.definition?.actions?.edit?.enableTitleLink)
+                this.onEditItem(context.item);
+        },
+        onClickItem(data, item) {
             item.select(!item.isSelected);
         },
         onRefresh() {

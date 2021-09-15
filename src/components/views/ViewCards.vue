@@ -19,6 +19,14 @@
                 filterFields,
                 stringFieldOperators,
                 loadFilterItems,
+                doubleClickItem,
+                clickItemFieldValue,
+                showItemButton,
+                editItem,
+                openItem,
+                deleteItem,
+                archiveItem,
+                restoreItem,
             }"
         >
             <v-data-iterator
@@ -260,18 +268,26 @@
                         <v-col v-for="item in items" :key="item.name" cols="12" sm="6" md="4" lg="3">
                             <v-card>
                                 <v-card-title class="tertiary--text align-start">
-                                    <div class="col-6 pa-0">{{ getTitle(item) }}</div>
-                                    <div class="col-6 pa-0 d-flex flex-row-reverse">
-                                        <v-checkbox
-                                            hide-details
-                                            class="ma-0 no-margin"
-                                            :value="isSelected(item)"
-                                            @change="(v) => select(item, v)"
-                                            on-icon="mdi-checkbox-marked-circle-outline"
-                                            off-icon="mdi-checkbox-blank-circle-outline"
-                                            color="tertiary"
-                                        ></v-checkbox>
-                                        <div v-if="isSelected(item)" class="corner-triangle-top-right"></div>
+                                    <div
+                                        class="col-12 d-flex flex-wrap pa-0"
+                                        @click="select(item, !isSelected(item))"
+                                        @dblclick="doubleClickItem($event, { item })"
+                                    >
+                                        <div class="col-6 pa-0">
+                                            <span @click.stop="clickItemFieldValue($event, { item })">{{ getTitle(item) }}</span>
+                                        </div>
+                                        <div class="col-6 pa-0 d-flex flex-row-reverse">
+                                            <v-checkbox
+                                                hide-details
+                                                class="ma-0 no-margin"
+                                                :value="isSelected(item)"
+                                                @change="(v) => select(item, v)"
+                                                on-icon="mdi-checkbox-marked-circle-outline"
+                                                off-icon="mdi-checkbox-blank-circle-outline"
+                                                color="tertiary"
+                                            ></v-checkbox>
+                                            <div v-if="isSelected(item)" class="corner-triangle-top-right"></div>
+                                        </div>
                                     </div>
                                 </v-card-title>
                                 <v-card-subtitle>
@@ -310,20 +326,58 @@
                                         </v-row>
                                     </template>
                                 </v-card-text>
-                                <!-- <v-switch
-                                    inset
-                                    dense
-                                    :input-value="isExpanded(item)"
-                                    :label="isExpanded(item) ? 'Expanded' : 'Closed'"
-                                    class="pl-4 mt-0"
-                                    @change="(v) => expand(item, v)"
-                                    v-if="getHasExpanded"
-                                ></v-switch> -->
-
-                                <v-btn text tile small @click.stop="expand(item, !isExpanded(item))" v-if="getHasExpanded">
-                                    <v-icon small class="mx-1">{{ isExpanded(item) ? "mdi-chevron-up" : "mdi-chevron-down" }}</v-icon>
-                                    {{ (isExpanded(item) ? "collapse" : "show-more") | translate }}
-                                </v-btn>
+                                <v-card-actions class="">
+                                    <v-btn text tile small @click.stop="expand(item, !isExpanded(item))" v-if="getHasExpanded">
+                                        <v-icon small class="mx-1">{{ isExpanded(item) ? "mdi-chevron-up" : "mdi-chevron-down" }}</v-icon>
+                                        {{ (isExpanded(item) ? "collapse" : "show-more") | translate }}
+                                    </v-btn>
+                                    <v-spacer></v-spacer>
+                                    <v-icon
+                                        v-if="showItemButton(ViewAction.OPEN, item)"
+                                        dense
+                                        color="primary"
+                                        class="mr-2"
+                                        @click.stop="openItem(item)"
+                                    >
+                                        mdi-eye
+                                    </v-icon>
+                                    <v-icon
+                                        v-if="showItemButton(ViewAction.EDIT, item)"
+                                        dense
+                                        color="primary"
+                                        class="mr-2"
+                                        @click.stop="editItem(item)"
+                                    >
+                                        mdi-pencil
+                                    </v-icon>
+                                    <v-icon
+                                        v-if="showItemButton(ViewAction.DELETE, item)"
+                                        dense
+                                        class="mr-2"
+                                        color="error"
+                                        @click.stop="deleteItem(item)"
+                                    >
+                                        mdi-delete-alert
+                                    </v-icon>
+                                    <v-icon
+                                        v-if="showItemButton(ViewAction.ARCHIVE, item)"
+                                        dense
+                                        class="mr-2"
+                                        color="error"
+                                        @click.stop="archiveItem(item)"
+                                    >
+                                        mdi-trash-can
+                                    </v-icon>
+                                    <v-icon
+                                        v-if="showItemButton(ViewAction.RESTORE, item)"
+                                        dense
+                                        class="mr-2"
+                                        color="primary"
+                                        @click.stop="restoreItem(item)"
+                                    >
+                                        mdi-restore
+                                    </v-icon>
+                                </v-card-actions>
 
                                 <v-divider></v-divider>
                                 <v-card-text v-if="isExpanded(item)">
@@ -374,6 +428,7 @@ import { View, ViewCardFieldFiller } from "../../models/View";
 import ViewListBase from "../abstracts/ViewListBase.vue";
 import { LowLevelUtils } from "../../common/LowLevelUtils";
 import { StringUtils } from '../../common/StringUtils';
+import { ViewAction } from '../../enums/ViewAction';
 
 export default {
     name: "view-cards",
@@ -408,6 +463,7 @@ export default {
             viewSelectedFieldFilter: null,
             /** @type {import("../../models/View").ViewFieldFilter[]} */
             viewFieldFilters: [],
+            ViewAction
         };
     },
     computed: {

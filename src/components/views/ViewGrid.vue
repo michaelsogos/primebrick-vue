@@ -16,11 +16,11 @@
                 changePage,
                 sortField,
                 sortDescendant,
-                doubleClickRow,
+                doubleClickItem,
                 openItem,
                 editItem,
-                clickRow,
-                showRowButton,
+                clickItem,
+                showItemButton,
                 pageNumber,
                 loadFilterItems,
                 enableMultiSelect,
@@ -46,8 +46,8 @@
                 @update:page="changePage"
                 @update:sort-by="sortField"
                 @update:sort-desc="sortDescendant"
-                @dblclick:row="doubleClickRow"
-                @click:row="clickRow"
+                @dblclick:row="doubleClickItem"
+                @click:row="clickItem"
                 :loading="viewDataLoading"
                 show-group-by
                 show-select
@@ -182,7 +182,7 @@
                 <template v-slot:[`item.actions`]="{ item }">
                     <div class="actionsCell">
                         <v-icon
-                            v-if="showRowButton(ViewAction.OPEN, item)"
+                            v-if="showItemButton(ViewAction.OPEN, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             color="primary"
@@ -192,7 +192,7 @@
                             mdi-eye
                         </v-icon>
                         <v-icon
-                            v-if="showRowButton(ViewAction.EDIT, item)"
+                            v-if="showItemButton(ViewAction.EDIT, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             color="primary"
@@ -202,7 +202,7 @@
                             mdi-pencil
                         </v-icon>
                         <v-icon
-                            v-if="showRowButton(ViewAction.DELETE, item)"
+                            v-if="showItemButton(ViewAction.DELETE, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -212,7 +212,7 @@
                             mdi-delete-alert
                         </v-icon>
                         <v-icon
-                            v-if="showRowButton(ViewAction.ARCHIVE, item)"
+                            v-if="showItemButton(ViewAction.ARCHIVE, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -222,7 +222,7 @@
                             mdi-trash-can
                         </v-icon>
                         <v-icon
-                            v-if="showRowButton(ViewAction.RESTORE, item)"
+                            v-if="showItemButton(ViewAction.RESTORE, item)"
                             :small="!getRowButtonDenseSize()"
                             :dense="getRowButtonDenseSize()"
                             class="mr-2"
@@ -527,7 +527,8 @@ export default {
 
                 this.highlightEvaluators.push(evaluator);
             }
-        }
+        },
+
     },
     mounted() {
         this.buildGridColumns();
