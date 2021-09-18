@@ -61,12 +61,12 @@ export class ViewListDefinition extends ViewDefinition {
         this.sorts = [];
         /** @type {ViewOptions} */
         this.options = null;
-        /** @type {ViewHighlighters[]} */
-        this.highlighters = [];
         /** @type {ViewNameType[]} */
         this.alternativeViews = [];
         /** @type {ViewListActions} */
         this.actions = null;
+        /** @type {ViewAggregator[]} */
+        this.aggregators = [];
     }
 }
 
@@ -85,6 +85,8 @@ export class ViewGridDefinition extends ViewListDefinition {
         super();
         /** @type {ViewColumnField[]} */
         this.fields = [];
+        /** @type {ViewGridHighlighters[]} */
+        this.highlighters = [];
     }
 }
 
@@ -97,6 +99,24 @@ export class ViewCardsDefinition extends ViewListDefinition {
         this.actions = null;
         /** @type {ViewCardsOptions} */
         this.options = null;
+        /** @type {ViewCardHighlighters[]} */
+        this.highlighters = [];
+    }
+}
+
+export class ViewAggregator {
+    constructor() {
+        /** @type {String} */
+        this.expression = null;
+        /** @type {ViewFilter[]} */
+        this.filters = [];
+        /** @type {String} */
+        this.color = null;
+        /** @type {String} */
+        this.labelKey = null;
+        this.excludeUIFilters = false;
+        /** @type {Number} */
+        this.value = null;
     }
 }
 
@@ -449,16 +469,61 @@ export class ViewHighlighters {
     constructor() {
         /** @type {String} */
         this.expression = null;
+    }
+}
+
+export class ViewGridHighlighters extends ViewHighlighters {
+    constructor() {
+        super();
         /** @type {String} */
         this.backgroundColor = null;
+        /** @type {ViewHighlightersFont} */
+        this.text = null;
+    }
+}
+
+export class ViewCardHighlighters extends ViewHighlighters {
+    constructor() {
+        super();
+        /** @type {ViewHighlightersBorder} */
+        this.border = null;
+        /** @type {ViewHighlightersFont} */
+        this.title = null;
+        /** @type {ViewHighlightersIcon} */
+        this.icon = null;
+    }
+}
+
+export class ViewHighlightersFont {
+    constructor() {
         /** @type {String} */
-        this.fontColor = null;
-        /** @type {String} */
-        this.fontWeight = null;
-        /** @type {String} */
-        this.fontStyle = null;
+        this.color = null;
+        /** @type {String & ("black" | "bold"| "medium" | "regular"|"light"|"thin")} */
+        this.weight = null;
+        /** @type {String & ("none" | "line-through"| "overline" | "underline")} */
+        this.style = null;
         /** @type {Boolean} */
-        this.fontItalic = false;
+        this.italic = null;
+    }
+}
+
+export class ViewHighlightersIcon {
+    constructor() {
+        /** @type {String} */
+        this.color = null;
+        /** @type {String} */
+        this.name = null;
+    }
+}
+
+export class ViewHighlightersBorder {
+    constructor() {
+        /** @type {(String & ("left" | "top"| "right" | "bottom"))[]} */
+        this.sides = null;
+        /** @type {Number} */
+        this.size = 5;
+        /** @type {String} */
+        this.color = "#607D8B";
     }
 }
 

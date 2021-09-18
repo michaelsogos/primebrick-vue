@@ -14,22 +14,6 @@
                     @filter="showFilterDialog = true"
                 ></h-view-toolbar>
             </template>
-
-            <v-btn
-                :color="view.color || 'tertiary'"
-                absolute
-                fab
-                dark
-                bottom
-                right
-                style="bottom: 50px"
-                @click="onAddItem()"
-                v-if="checkFabButtonVisibility()"
-                :title="$options.filters.translate('add-new-record')"
-            >
-                <v-icon>mdi-plus</v-icon>
-            </v-btn>
-
             <slot
                 name="dataview"
                 :deleteItem="onDeleteItem"
@@ -53,10 +37,28 @@
             >
                 <h1>SLOT DATAVIEW IS EMPTY!</h1>
             </slot>
+
             <template v-slot:footer>
-                <div></div>
+                <slot name="footer">
+                    <h1>SLOT FOOTER IS EMPTY!</h1>
+                </slot>
             </template>
         </h-panel>
+
+        <v-btn
+            :color="view.color || 'tertiary'"
+            absolute
+            fab
+            dark
+            bottom
+            right
+            style="bottom: 50px"
+            @click="onAddItem()"
+            v-if="checkFabButtonVisibility()"
+            :title="$options.filters.translate('add-new-record')"
+        >
+            <v-icon>mdi-plus</v-icon>
+        </v-btn>
 
         <v-snackbar v-model="showRecordRecoverSnackbar" :timeout="5000" centered color="info" elevation="24" vertical>
             <v-progress-linear
@@ -236,8 +238,8 @@
 
 <script>
 import $ from "../../store/types";
-import { View, ViewFilter, ViewFieldFilter, ViewSort, ViewFieldFilterListQueryResultItem, ViewFieldFilterViewModel } from "../../models/View";
-import { Query } from '../../models/Query';
+import { View, ViewFilter, ViewFieldFilter, ViewSort, ViewFieldFilterListQueryResultItem, ViewFieldFilterViewModel, ViewAggregator } from "../../models/View";
+import { Query, QueryField } from '../../models/Query';
 import { OpenView } from '../../models/OpenView';
 import { ConfirmDialog } from "../../models/ConfirmDialog";
 import { StringUtils } from "../../common/StringUtils";
@@ -284,6 +286,8 @@ export default {
         viewFieldFilters() {
             this.viewDataPageNumber = 1;
             this.loadData();
+            if (this.view.definition?.aggregators?.some(a => !a.excludeUIFilters))
+                this.loadAggregateValues();
         }
     },
     computed: {
@@ -401,12 +405,15 @@ export default {
             this.viewDataSortFields = [];
             this.viewDataSortDirections = [];
             this.loadData();
+            this.loadAggregateValues();
         },
         onSearch(/** @type {String} */ searchTerm) {
             this.$emit('onReset');
             this.viewDataPageNumber = 1;
             this.viewSearchTerm = searchTerm;
             this.loadData();
+            if (this.view.definition?.aggregators?.some(a => !a.excludeUIFilters))
+                this.loadAggregateValues();
         },
         onShowArchived(/** @type {("none"|"only"|"also")} */ option) {
             this.showArchivedEntities = option;
@@ -685,6 +692,97 @@ export default {
 
             this.$emit('onDataLoaded', queryResult);
         },
+        async loadAggregateValues() {
+            this.$emit('onAggregatesLoading');
+
+            /** @type {ViewAggregator[]} */
+            const compiledAggregators = [];
+
+            for (const aggregator of this.view.definition.aggregators) {
+
+                const query = new Query();
+                query.brick = this.view.brick;
+                query.entity = this.view.entity.name;
+                const aggregateField = new QueryField();
+                aggregateField.expression = aggregator.expression;
+                aggregateField.alias = "value";
+                query.fields = [aggregateField];
+                query.filters = Array.from(aggregator?.filters || []);
+                query.showArchivedEntities = this.showArchivedEntities;
+                query.excludeIDField = true;
+
+                if (!(aggregator.excludeUIFilters || false) && this.viewSearchTerm) {
+                    const searchFilter = new ViewFilter();
+                    searchFilter.leftOperator = "AND";
+                    searchFilter.expressionOperator = "OR";
+                    searchFilter.expressionValues = {};
+                    searchFilter.expressionValues["searchTerm"] = `%${this.viewSearchTerm}%`;
+
+                    for (const searchField of this.view.definition.actions.search.fields) {
+                        searchFilter.expressions.push(`$self.${searchField} like :searchTerm`);
+                    }
+
+                    query.filters.push(searchFilter);
+                }
+
+                if (!(aggregator.excludeUIFilters || false) && this.viewFieldFilters?.length > 0) {
+                    const columnFilter = new ViewFilter();
+                    columnFilter.leftOperator = "AND";
+                    columnFilter.expressionOperator = "AND";
+                    columnFilter.expressionValues = {};
+
+                    for (const filterField of this.viewFieldFilters) {
+                        if (filterField.operator == 'IN') {
+                            if (Array.isArray(filterField.value) && filterField.value.length > 0)
+                                columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter)`);
+                        } else
+                            columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter`);
+
+                        columnFilter.expressionValues[`${filterField.field}_field_filter`] = filterField.value;
+                    }
+
+                    if (columnFilter.expressions.length > 0)
+                        query.filters.push(columnFilter);
+                }
+
+                this.appliedDialogFilters = 0;
+                if (!(aggregator.excludeUIFilters || false) && this.viewDialogFilters && this.viewDialogFilters.length > 0) {
+                    const columnFilter = new ViewFilter();
+                    columnFilter.leftOperator = "AND";
+                    columnFilter.expressionOperator = this.dialogFiltersSelectedOperator;
+                    columnFilter.expressionValues = {};
+
+                    for (let idx = 0; idx < this.viewDialogFilters.length; idx++) {
+                        const filterField = this.viewDialogFilters[idx];
+
+                        if (!filterField.value || !filterField.operator) continue;
+
+                        if (filterField.operator == 'IN')
+                            columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} (:...${filterField.field}_field_filter_${idx})`);
+                        else
+                            columnFilter.expressions.push(`$self.${filterField.field} ${filterField.operator} :${filterField.field}_field_filter_${idx}`);
+                        columnFilter.expressionValues[`${filterField.field}_field_filter_${idx}`] = filterField.value;
+
+                        this.appliedDialogFilters++;
+                    }
+
+                    if (columnFilter.expressions.length > 0)
+                        query.filters.push(columnFilter);
+                }
+
+                const queryResult = await this.$store.getters[$.getters.APP_GET_RECORD](query);
+                /** @type {ViewAggregator[]} */
+
+                if (queryResult)
+                    compiledAggregators.push(Object.assign(new ViewAggregator(), aggregator, queryResult));
+                else {
+                    compiledAggregators.push(Object.assign(new ViewAggregator(), aggregator));
+                }
+
+            }
+
+            this.$emit('onAggregatesLoaded', compiledAggregators);
+        },
         /**
         * @param {String} searchTerm
         * @param {ViewFieldFilter} filter
@@ -753,6 +851,8 @@ export default {
         onResetDialogFilters() {
             this.viewDialogFilters.splice(0);
             this.loadData();
+            if (this.view.definition?.aggregators?.some(a => !a.excludeUIFilters))
+                this.loadAggregateValues();
         },
         onApplyDialogFilters() {
             this.$emit('onReset');
@@ -794,6 +894,8 @@ export default {
             }
 
             this.loadData();
+            if (this.view.definition?.aggregators?.some(a => !a.excludeUIFilters))
+                this.loadAggregateValues();
         },
         onAddFilter() {
             if (this.dialogFiltersSelectedField) {
@@ -807,8 +909,12 @@ export default {
     mounted() {
         this.loadData()
             .catch(ex => {
-                console.error(ex);
-                alert(ex.message);
+                window.logger.error(ex);
+            });
+
+        this.loadAggregateValues()
+            .catch(ex => {
+                window.logger.error(ex);
             });
 
         EventBus.$on(`view-${this.view.viewId}:refresh`, this.onRefresh);

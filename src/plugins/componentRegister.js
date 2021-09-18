@@ -36,6 +36,10 @@ Vue.component(UIViewLog.name, UIViewLog);
 import UIAppBanner from "../components/ui/AppBanner.vue";
 Vue.component(UIAppBanner.name, UIAppBanner);
 
+// @ts-ignore
+import UIAggregatesBar from "../components/ui/ViewAggregatesBar.vue";
+Vue.component(UIAggregatesBar.name, UIAggregatesBar);
+
 //* Register Views *//
 //--------------------------//
 // @ts-ignore

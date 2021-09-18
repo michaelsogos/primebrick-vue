@@ -7,7 +7,7 @@ export class Query {
         this.brick = null;
         /** @type {String} */
         this.entity = null;
-        /** @type {String[]} */
+        /** @type {(String|QueryField)[]} */
         this.fields = [];
         /** @type {String} */
         this.showArchivedEntities = null;
@@ -21,5 +21,14 @@ export class Query {
         this.skip = null;
         /** @type {Boolean} */
         this.excludeIDField = false;
+    }
+}
+
+export class QueryField {
+    constructor() {
+        /** @type {String} */
+        this.expression = null;
+        /** @type {String} */
+        this.alias = null;
     }
 }

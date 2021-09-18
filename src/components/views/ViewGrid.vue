@@ -7,6 +7,8 @@
         @onDataLoading="viewDataLoading = true"
         @onSelectAll="onSelectAll"
         @onReset="onReset"
+        @onAggregatesLoaded="onAggregatesLoaded"
+        @onAggregatesLoading="viewAggregatesLoading = true"
     >
         <template
             v-slot:dataview="{
@@ -233,7 +235,18 @@
                         </v-icon>
                     </div>
                 </template>
+
+                <template v-slot:footer>
+                    <h-view-aggregates-bar
+                        :viewAggregatesLoading="viewAggregatesLoading"
+                        :viewAggregators="viewAggregators"
+                        :class="[...getDataIteratorClasses]"
+                    ></h-view-aggregates-bar>
+                </template>
             </v-data-table>
+        </template>
+        <template v-slot:footer>
+            <div></div>
         </template>
     </view-list-base>
 </template>
@@ -268,7 +281,10 @@ export default {
             viewGridColumns: [],
             ViewAction,
             /** @type {{eval: Function, cssClasses: String[]}[]} */
-            highlightEvaluators: []
+            highlightEvaluators: [],
+            /** @type {import("../../models/View").ViewAggregator[]} */
+            viewAggregators: [],
+            viewAggregatesLoading: false,
         };
     },
     computed: {
@@ -322,6 +338,15 @@ export default {
 
             return filterHeaders;
         },
+        /** @returns {String[]} */
+        getDataIteratorClasses() {
+            /** @type {String[]} */
+            const classes = [];
+            if (this.viewAggregators?.length > 0 || false)
+                classes.push("data-iterator-aggregators");
+
+            return classes;
+        }
     },
     methods: {
         getStringFieldOperator() {
@@ -339,7 +364,10 @@ export default {
          */
         onDataLoaded(queryResult) {
             this.viewData = queryResult;
-            this.buildHighlightEvaluators();
+
+            if (this.highlightEvaluators?.length <= 0)
+                this.buildHighlightEvaluators();
+
             this.viewDataLoading = false;
         },
         onReset() {
@@ -413,6 +441,14 @@ export default {
             else
                 this.viewFieldFilters.splice(filterFieldIndex);
 
+        },
+        /**
+         * @param {import("../../models/View").ViewAggregator[]} compiledAggregators
+         */
+        onAggregatesLoaded(compiledAggregators) {
+            this.viewAggregators.splice(0, this.viewAggregators.length, ...compiledAggregators);
+            this.viewAggregatesLoading = false;
+            // document.documentElement.style.setProperty('--v-data-iterator-height', "100px");
         },
         getRowButtonDenseSize() {
             let count = 0;
@@ -520,10 +556,10 @@ export default {
                 };
 
                 if (highlight.backgroundColor) evaluator.cssClasses.push(...highlight.backgroundColor.split(" "));
-                if (highlight.fontColor) evaluator.cssClasses.push(`${highlight.fontColor}--text`);
-                if (highlight.fontWeight) evaluator.cssClasses.push(`font-weight-${highlight.fontWeight}`);
-                if (highlight.fontStyle) evaluator.cssClasses.push(`text-decoration-${highlight.fontStyle}`);
-                if (highlight.fontItalic) evaluator.cssClasses.push("font-italic");
+                if (highlight.text?.color) evaluator.cssClasses.push(`${highlight.text.color}--text`);
+                if (highlight.text?.weight) evaluator.cssClasses.push(`font-weight-${highlight.text.weight}`);
+                if (highlight.text?.style) evaluator.cssClasses.push(`text-decoration-${highlight.text.style}`);
+                if (highlight.text?.italic) evaluator.cssClasses.push("font-italic");
 
                 this.highlightEvaluators.push(evaluator);
             }
@@ -568,6 +604,10 @@ export default {
     background-clip: initial;
     background-color: rgb(255, 255, 255);
     z-index: 1;
+}
+
+.v-data-table--fixed-header > .data-iterator-aggregators {
+    border-top: thin solid rgba(0, 0, 0, 0.12) !important;
 }
 
 table > tbody > tr > td[role="columnheader"] .v-text-field.v-text-field--solo .v-input__control {

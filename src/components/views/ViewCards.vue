@@ -7,6 +7,8 @@
         @onDataLoading="viewDataLoading = true"
         @onSelectAll="onSelectAll"
         @onReset="onReset"
+        @onAggregatesLoaded="onAggregatesLoaded"
+        @onAggregatesLoading="viewAggregatesLoading = true"
     >
         <template
             v-slot:dataview="{
@@ -45,7 +47,7 @@
                 @update:sort-desc="sortDescendant"
                 :single-select="enableMultiSelect"
                 v-model="viewSelectedRows"
-                class="pa-4 d-flex flex-column data-iterator-fixed-footer"
+                :class="['pa-4', 'd-flex', 'flex-column', 'data-iterator-fixed-footer']"
                 light
                 :sort-desc.sync="viewSortingDesc"
             >
@@ -266,17 +268,16 @@
                 <template v-slot:default="{ items, isExpanded, expand, isSelected, select }">
                     <v-row class="flex-shrink-0">
                         <v-col v-for="item in items" :key="item.name" cols="12" sm="6" md="4" lg="3">
-                            <v-card>
-                                <v-card-title class="tertiary--text align-start">
-                                    <div
-                                        class="col-12 d-flex flex-wrap pa-0"
-                                        @click="select(item, !isSelected(item))"
-                                        @dblclick="doubleClickItem($event, { item })"
-                                    >
-                                        <div class="col-6 pa-0">
+                            <v-card :style="cardBorderStyle(item)">
+                                <v-card-title class="align-start" :class="cardTitleClasses(item)">
+                                    <div class="col-12 d-flex flex-wrap pa-0" @dblclick="doubleClickItem($event, { item })">
+                                        <div class="col-11 pa-0">
+                                            <v-icon v-if="showCardTitleIcon(item)" class="mr-2" :class="cardTitleIconClass(item)">
+                                                {{ cardTitleIconName(item) }}
+                                            </v-icon>
                                             <span @click.stop="clickItemFieldValue($event, { item })">{{ getTitle(item) }}</span>
                                         </div>
-                                        <div class="col-6 pa-0 d-flex flex-row-reverse">
+                                        <div class="col-1 pa-0 d-flex flex-row-reverse">
                                             <v-checkbox
                                                 hide-details
                                                 class="ma-0 no-margin"
@@ -304,11 +305,11 @@
                                                 :align-self="filler.isChip ? 'center' : 'start'"
                                                 :offset="filler.columnOffset"
                                             >
-                                                <v-chip v-if="filler.isChip" label color="tertiary" dark small>
+                                                <v-chip v-if="filler.isChip" label :class="cardChipClass(item)" dark small>
                                                     {{ filler.value }}
                                                 </v-chip>
                                                 <template v-else>
-                                                    <span v-if="!filler.hideLabel" class="caption tertiary--text">
+                                                    <span v-if="!filler.hideLabel" class="caption" :class="cardLabelClass(item)">
                                                         {{ filler.label }}
                                                     </span>
                                                     <br />
@@ -391,11 +392,11 @@
                                                 :align-self="filler.isChip ? 'center' : 'start'"
                                                 :offset="filler.columnOffset"
                                             >
-                                                <v-chip v-if="filler.isChip" label color="tertiary" dark small>
+                                                <v-chip v-if="filler.isChip" label :class="cardChipClass(item)" dark small>
                                                     {{ filler.value }}
                                                 </v-chip>
                                                 <template v-else>
-                                                    <span v-if="!filler.hideLabel" class="caption tertiary--text">
+                                                    <span v-if="!filler.hideLabel" class="caption" :class="cardLabelClass(item)">
                                                         {{ filler.label }}
                                                     </span>
                                                     <br />
@@ -417,7 +418,18 @@
                         </v-col>
                     </v-row>
                 </template>
+
+                <template v-slot:footer>
+                    <h-view-aggregates-bar
+                        :viewAggregatesLoading="viewAggregatesLoading"
+                        :viewAggregators="viewAggregators"
+                        :class="[...getDataIteratorClasses]"
+                    ></h-view-aggregates-bar>
+                </template>
             </v-data-iterator>
+        </template>
+        <template v-slot:footer>
+            <div></div>
         </template>
     </view-list-base>
 </template>
@@ -445,8 +457,13 @@ export default {
             /** @type {import("../../models/UnknownEntity").UnknownEntity[]} */
             viewSelectedRows: [],
             viewDataLoading: false,
+            viewAggregatesLoading: false,
             /** @type {{eval: Function, cssClasses: String[]}[]} */
-            highlightEvaluators: [],
+            highlightTitleEvaluators: [],
+            /** @type {{eval: Function, cssClasses: String[], cssStyle: String}[]} */
+            highlightBorderEvaluators: [],
+            /** @type {{eval: Function, cssClasses: String[], cssStyle: String}[]} */
+            highlightIconEvaluators: [],
             /** @type {Boolean} */
             viewSortingDesc: false,
             sortDirections: [
@@ -463,7 +480,9 @@ export default {
             viewSelectedFieldFilter: null,
             /** @type {import("../../models/View").ViewFieldFilter[]} */
             viewFieldFilters: [],
-            ViewAction
+            ViewAction,
+            /** @type {import("../../models/View").ViewAggregator[]} */
+            viewAggregators: []
         };
     },
     computed: {
@@ -511,6 +530,15 @@ export default {
         /** @returns {Boolean} */
         getFilterHeaderEnabled() {
             return this.view.definition?.actions?.filter?.enableHeader;
+        },
+        /** @returns {String[]} */
+        getDataIteratorClasses() {
+            /** @type {String[]} */
+            const classes = [];
+            if (this.viewAggregators?.length > 0 || false)
+                classes.push("data-iterator-aggregators");
+
+            return classes;
         }
     },
     methods: {
@@ -519,28 +547,206 @@ export default {
          */
         onDataLoaded(queryResult) {
             this.viewData = queryResult;
-            this.buildHighlightEvaluators();
+            if (this.highlightTitleEvaluators?.length <= 0 || this.highlightBorderEvaluators?.length <= 0)
+                this.buildHighlightEvaluators();
             this.viewDataLoading = false;
         },
+        /**
+         * @param {import("../../models/View").ViewAggregator[]} compiledAggregators
+         */
+        onAggregatesLoaded(compiledAggregators) {
+            this.viewAggregators.splice(0, this.viewAggregators.length, ...compiledAggregators);
+            this.viewAggregatesLoading = false;
+            document.documentElement.style.setProperty('--v-data-iterator-height', "105px");
+        },
         buildHighlightEvaluators() {
-            this.highlightEvaluators.splice(0);
+            this.highlightTitleEvaluators.splice(0);
+            this.highlightBorderEvaluators.splice(0);
+            this.highlightIconEvaluators.splice(0);
 
-            if (!this.view || !(this.viewData?.data) || this.viewData.data.length <= 0) return;
+            // if (!this.view || !(this.viewData?.data) || this.viewData.data.length <= 0) return;
+            if (!this.view || this.viewData?.data?.length <= 0) return;
+
+            /**
+             * @param {String} color
+             */
+            const convertColorNameInCss = function (color) {
+                if (color.startsWith("#") || color.startsWith("rgb(")) return color;
+                const colorParams = color.split(" ");
+                if (colorParams.length == 1) return `var(--v-${color}-base)`;
+                if (colorParams.length == 2) {
+
+                    const variantIndex = colorParams.findIndex((colorName) => {
+                        return /\b(lighten|darken|accent)\b/.test(colorName);
+                    });
+                    if (variantIndex < 0) return "black";
+                    const colorNameIndex = variantIndex == 1 ? 0 : 1;
+
+                    return `var(--v-${colorParams[colorNameIndex]}-${colorParams[variantIndex].replace('-', '')})`;
+                }
+                else {
+                    return "black";
+                }
+            };
 
             for (let highlight of this.view.definition.highlighters) {
-                let evaluator = {
+                let evaluatorTitle = {
                     eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], highlight.expression),
-                    cssClasses: []
+                    cssClasses: [],
+                    cssStyles: ""
+                };
+                let evaluatorBorder = {
+                    eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], highlight.expression),
+                    cssClasses: [],
+                    cssStyle: ""
+                };
+                let evaluatorIcon = {
+                    eval: LowLevelUtils.makeExpessionEvaluator(this.viewData.data[0], highlight.expression),
+                    cssClasses: [],
+                    cssStyle: ""
                 };
 
-                if (highlight.backgroundColor) evaluator.cssClasses.push(...highlight.backgroundColor.split(" "));
-                if (highlight.fontColor) evaluator.cssClasses.push(`${highlight.fontColor}--text`);
-                if (highlight.fontWeight) evaluator.cssClasses.push(`font-weight-${highlight.fontWeight}`);
-                if (highlight.fontStyle) evaluator.cssClasses.push(`text-decoration-${highlight.fontStyle}`);
-                if (highlight.fontItalic) evaluator.cssClasses.push("font-italic");
+                if (highlight.title?.color) evaluatorTitle.cssClasses.push(`${highlight.title.color}--text`);
+                if (highlight.title?.weight) evaluatorTitle.cssClasses.push(`font-weight-${highlight.title.weight}`);
+                if (highlight.title?.style) evaluatorTitle.cssClasses.push(`text-decoration-${highlight.title.style}`);
+                if (highlight.title?.italic) evaluatorTitle.cssClasses.push("font-italic");
+                this.highlightTitleEvaluators.push(evaluatorTitle);
 
-                this.highlightEvaluators.push(evaluator);
+                if (highlight.border?.sides.includes("left"))
+                    evaluatorBorder.cssStyle =
+                        evaluatorBorder.cssStyle.concat(`border-left: ${highlight.border?.size || 5}px solid ${convertColorNameInCss(highlight.border?.color)}; `);
+                if (highlight.border?.sides.includes("top"))
+                    evaluatorBorder.cssStyle =
+                        evaluatorBorder.cssStyle.concat(`border-top: ${highlight.border?.size || 5}px solid ${convertColorNameInCss(highlight.border?.color)}; `);
+                if (highlight.border?.sides.includes("right"))
+                    evaluatorBorder.cssStyle =
+                        evaluatorBorder.cssStyle.concat(`border-right: ${highlight.border?.size || 5}px solid ${convertColorNameInCss(highlight.border?.color)}; `);
+                if (highlight.border?.sides.includes("bottom"))
+                    evaluatorBorder.cssStyle =
+                        evaluatorBorder.cssStyle.concat(`border-bottom: ${highlight.border?.size || 5}px solid ${convertColorNameInCss(highlight.border?.color)}; `);
+
+                this.highlightBorderEvaluators.push(evaluatorBorder);
+
+                if (highlight.icon) {
+                    if (highlight.icon?.color) evaluatorIcon.cssClasses.push(`${highlight.icon.color}--text`);
+                    if (highlight.icon?.name) evaluatorIcon.cssStyle = highlight.icon.name;
+
+                    this.highlightIconEvaluators.push(evaluatorIcon);
+                }
             }
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String[]}
+         */
+        cardTitleClasses(item) {
+            /** @type {String[]} */
+            let cssClasses = [];
+
+            for (let evaluator of this.highlightTitleEvaluators) {
+                if (evaluator.eval(item))
+                    cssClasses.push(...evaluator.cssClasses);
+            }
+
+            if (cssClasses.length <= 0) cssClasses.push("tertiary--text");
+
+            return cssClasses;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {Boolean}
+         */
+        showCardTitleIcon(item) {
+            let result = false;
+
+            for (let evaluator of this.highlightIconEvaluators) {
+                if (evaluator.eval(item)) {
+                    result = true;
+                    continue;
+                }
+            }
+
+            return result;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String[]}
+         */
+        cardTitleIconClass(item) {
+            /** @type {String[]} */
+            let cssClasses = [];
+
+            for (let evaluator of this.highlightIconEvaluators) {
+                if (evaluator.eval(item))
+                    cssClasses.push(...evaluator.cssClasses);
+            }
+
+            if (cssClasses.length <= 0) cssClasses.push("tertiary--text");
+
+            return cssClasses;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String}
+         */
+        cardTitleIconName(item) {
+            /** @type {String} */
+            let iconName = "mdi-card-text";
+
+            for (let evaluator of this.highlightIconEvaluators) {
+                if (evaluator.eval(item))
+                    iconName = evaluator.cssStyle;
+            }
+
+            return iconName;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String[]}
+         */
+        cardLabelClass(item) {
+            /** @type {String[]} */
+            let cssClasses = [];
+
+            for (let evaluator of this.highlightTitleEvaluators) {
+                if (evaluator.eval(item))
+                    cssClasses.push(evaluator.cssClasses.find((c) => c.endsWith("--text")));
+            }
+
+            if (cssClasses.length <= 0) cssClasses.push("tertiary--text");
+
+            return cssClasses;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String[]}
+         */
+        cardChipClass(item) {
+            /** @type {String[]} */
+            let cssClasses = [];
+
+            for (let evaluator of this.highlightTitleEvaluators) {
+                if (evaluator.eval(item))
+                    cssClasses.push(evaluator.cssClasses.find((c) => c.endsWith("--text")).replace("--text", ""));
+            }
+
+            if (cssClasses.length <= 0) cssClasses.push("tertiary");
+
+            return cssClasses;
+        },
+        /**
+         * @param {import("../../models/UnknownEntity").UnknownEntity} item
+         * @returns {String}
+         */
+        cardBorderStyle(item) {
+            let style = "";
+
+            for (let evaluator of this.highlightBorderEvaluators) {
+                if (evaluator.eval(item))
+                    style = style.concat(evaluator.cssStyle);
+            }
+
+            return style;
         },
         onSelectAll() {
             if (this.viewSelectedRows.length != this.viewData.data.length)
@@ -678,9 +884,22 @@ export default {
             else
                 this.viewFieldFilters.splice(0);
         },
+    },
+    mounted() {
+        this.onAggregatesLoaded([]);
     }
 }
 </script>
+<style scoped>
+:root {
+    --v-data-iterator-height: "36px";
+}
+
+.data-iterator-fixed-footer.v-data-iterator > .row {
+    overflow: scroll-y;
+    padding: 48px 0px var(--v-data-iterator-height) 0px;
+}
+</style>
 <style >
 .no-margin .v-input--selection-controls__input {
     margin: 0px;
@@ -701,12 +920,25 @@ export default {
 }
 
 .data-iterator-fixed-footer.v-data-iterator > .v-data-footer {
+    /* border-bottom: thin solid rgba(0, 0, 0, 0.12) !important; */
     z-index: 1;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     background-color: white;
+    border-top: thin solid rgba(0, 0, 0, 0.12) !important;
+}
+
+.data-iterator-fixed-footer.v-data-iterator > .data-iterator-aggregators {
+    /* border-bottom: thin solid rgba(0, 0, 0, 0.12) !important; */
+    z-index: 1;
+    position: absolute;
+    bottom: 37px;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border-top: thin solid rgba(0, 0, 0, 0.12) !important;
 }
 
 .theme--light .v-data-iterator .v-data-footer {
